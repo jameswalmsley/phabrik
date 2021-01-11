@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+import argparse
 from io import BytesIO, SEEK_SET
 
 import frontmatter
@@ -102,9 +103,16 @@ def sync():
         fp.write(os.linesep)
         fp.write(os.linesep)
 
+def create():
+    tid = phab.maniphest.createtask(title=arg)
+    print('T'+tid['id']+'.md')
+
 if cmd == "update":
     update()
 
 if cmd == "sync":
     sync()
+
+if cmd == "create":
+    create()
 
