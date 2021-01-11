@@ -18,18 +18,16 @@ local function tasks_command(command, task, args)
 end
 
 local function update_task()
-	tasks_command("description", get_task_id(), get_file_path())
+	tasks_command("update", get_task_id(), get_file_path())
 end
 
-local function update_points()
-
-	points = vim.fn.input("How many points? > ")
-	tasks_command("points", get_task_id(), points)
+local function sync_task()
+	tasks_command("sync", get_task_id(), get_file_path())
 end
 
 return {
 	update_task = update_task,
-	update_points = update_points,
+	sync_task = sync_task,
 	get_path = get_path
 }
 
