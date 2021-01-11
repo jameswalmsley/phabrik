@@ -7,7 +7,7 @@ local function update_task()
 	local file_reg = vim.api.nvim_eval('@%')
 	name = file_reg:match("^.+/(.+)%..+$")
 
-	vim.api.nvim_command("!python3 " .. path .. "/py/task.py " .. "T" .. name .. " " .. file_reg)
+	vim.api.nvim_command("!python3 " .. path .. "/py/task.py " .. name .. " " .. file_reg)
 end
 
 

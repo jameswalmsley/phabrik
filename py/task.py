@@ -1,3 +1,4 @@
+import re
 import sys
 
 from phabricator import Phabricator
@@ -11,8 +12,17 @@ if not task.startswith('T'):
 
 num = int(task[1:])
 
-s = open(file, 'r').read()
+
+description=""
+
+with open(file, 'r') as fp:
+    for cnt, line in enumerate(fp):
+        matches = re.findall('(\[\[T\d+\]\])', line)
+        if matches:
+            for t in matches:
+                line = line.replace(t, t.replace('[','').replace(']', ''))
+        description = description + line
 
 phab = Phabricator();
-task = phab.maniphest.update(id=num, description=s)
+task = phab.maniphest.update(id=num, description=description)
 
