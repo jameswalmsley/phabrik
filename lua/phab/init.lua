@@ -43,7 +43,7 @@ end
 local api = vim.api
 
 local function get_diff()
-	buf = api.nvim_create_buf(false, true) -- create new emtpy buffer
+	local buf = api.nvim_create_buf(true, true) -- create new emtpy buffer
 
 	api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
 
@@ -80,7 +80,8 @@ local function get_diff()
 	api.nvim_buf_set_option(buf, 'modifiable', false)
 	api.nvim_buf_set_option(buf, 'filetype', 'diff')
 
-	api.nvim_open_win(buf, true, opts)
+	api.nvim_command("buffer " ..buf)
+
 
 end
 
