@@ -149,7 +149,7 @@ def sync():
             title = rev['fields']['title']
             closed = rev['fields']['status']['closed']
             if(closed):
-                rname = strike(rname)
+                title = strike(title)
 
             backmatter.append("{} - {}".format(rname, title))
 

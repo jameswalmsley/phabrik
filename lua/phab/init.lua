@@ -21,6 +21,10 @@ local function phab_command(command, task, args)
 	return vim.fn.system("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. task .. " " .. args)
 end
 
+local function phab_commandlist(command, task, args)
+	return vim.fn.systemlist("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. task .. " " .. args)
+end
+
 local function update_task()
 	phab_command("update", get_task_id(), get_file_path())
 end
@@ -36,10 +40,55 @@ local function create_task()
 	vim.api.nvim_command("edit " .. path)
 end
 
+local api = vim.api
+
+local function get_diff()
+	buf = api.nvim_create_buf(false, true) -- create new emtpy buffer
+
+	api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+
+
+	-- get dimensions
+	local width = api.nvim_get_option("columns")
+	local height = api.nvim_get_option("lines")
+
+	-- calculate our floating window size
+	local win_height = math.ceil(height * 0.8 - 4)
+	local win_width = math.ceil(width * 0.8)
+
+	-- and its starting position
+	local row = math.ceil((height - win_height) / 2 - 1)
+	local col = math.ceil((width - win_width) / 2)
+
+	-- set some options
+	local opts = {
+		style = "minimal",
+		relative = "editor",
+		width = win_width,
+		height = win_height,
+		row = row,
+		col = col
+	}
+
+	-- and finally create it with buffer attached
+
+	diffnum = vim.fn.expand('<cWORD>')
+
+	local diff = phab_commandlist("diff", diffnum, "test")
+	api.nvim_buf_set_lines(buf, 0, -1, false, diff)
+
+	api.nvim_buf_set_option(buf, 'modifiable', false)
+	api.nvim_buf_set_option(buf, 'filetype', 'diff')
+
+	api.nvim_open_win(buf, true, opts)
+
+end
+
 return {
 	update_task = update_task,
 	sync_task = sync_task,
 	create_task = create_task,
+	get_diff = get_diff,
 	get_path = get_path
 }
 
