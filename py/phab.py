@@ -19,6 +19,9 @@ phab.update_interfaces()
 def task_string_to_id(tname):
     return int(tname[1:])
 
+def diff_string_to_id(dname):
+    return int(dname[1:])
+
 transactions = []
 def add_transaction(type, value):
     transactions.append({'type': type, 'value': value})
@@ -67,7 +70,31 @@ def revision_get_diff_phid(revision):
     revid = int(revision[1:])
     revs = phab.differential.revision.search(constraints={'ids': [revid]})
     phid = revs['data'][0]['fields']['diffPHID']
-    return phid
+    return phid, revs
+
+def revision_get_commit_message(revision):
+    revid = diff_string_to_id(revision)
+    message = phab.differential.getcommitmessage(revision_id=revid)
+    return message[:]
+
+
+status_symbols = {
+    'accepted':'🟢',
+    'needs-review': '🟠',
+    'needs-revision': '🔨',
+    'published': '🟣',
+    'abandoned': '🛫',
+    'draft': '🔵',
+    'changes-planned': '🔴'
+}
+
+def get_status_symbol(status):
+    value = status['value']
+    if(value in status_symbols):
+        return status_symbols[value]
+
+    return " "
+
 
 def update():
     description=""
@@ -150,9 +177,10 @@ def sync():
             if(closed):
                 title = strike(title)
 
-            backmatter.append("{} - {}".format(rname, title))
+            status = get_status_symbol(rev['fields']['status'])
 
-        pprint(backmatter)
+            backmatter.append("{} - {} - {}".format(rname, status, title))
+            pprint(rev['fields']['status'])
         fp.write("\n".join(backmatter))
 
         fp.write('\n+++\n')
@@ -179,13 +207,22 @@ def revisions():
     for rev in revs:
         print(rev.strip(), end=' ')
 
+    pprint(_['data'])
+
     print()
 
 def diff(diff_name):
-    phid = revision_get_diff_phid(diff_name)
+    phid, rev = revision_get_diff_phid(diff_name)
     diff = phab.differential.diff.search(constraints={'phids': [phid]})
     diffid = diff['data'][0]['id']
     rawdiff = phab.differential.getrawdiff(diffID="{}".format(diffid))
+    commit_message = revision_get_commit_message(diff_name)
+    print("From:")
+    print("Subject:{}".format(commit_message.splitlines()[0]))
+    print(commit_message)
+    print()
+    print("---")
+    print()
     print(rawdiff[:])
 
 def diff_approve(diff_name):
@@ -206,6 +243,9 @@ def comment():
 def create():
     tid = phab.maniphest.createtask(title=arg)
     print('T'+tid['id']+'.md')
+
+def patch(revision):
+    message = revision_get_commit_message()
 
 if cmd == "update":
     update()
@@ -230,3 +270,7 @@ if cmd == "comments":
 
 if cmd == "revisions":
     revisions()
+
+if cmd == "patch":
+    patch(task)
+    #os.system("arc patch --nobranch --allow-untracked {}".format(task))
