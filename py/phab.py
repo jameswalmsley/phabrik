@@ -53,7 +53,6 @@ def task_get_revision_phids(task_name):
 
     return phids
 
-
 def task_get_revisions(task_name):
     revs = []
     phids = task_get_revision_phids(task_name)
@@ -189,6 +188,12 @@ def diff(diff_name):
     rawdiff = phab.differential.getrawdiff(diffID="{}".format(diffid))
     print(rawdiff[:])
 
+def diff_approve(diff_name):
+    transactions.append({'type': 'accept', 'value': True})
+    print(diff_name, transactions)
+    result = phab.differential.revision.edit(objectIdentifier=diff_name, transactions=transactions)
+    pprint(result)
+
 def comments():
     t = phab.transaction.search(objectIdentifier="T31334")#phab.maniphest.query(ids=[task_string_to_id(task)])
     key = list(t)[0]
@@ -216,6 +221,9 @@ if cmd == "query":
 
 if cmd == "diff":
     diff(task)
+
+if cmd == "diff-approve":
+    diff_approve(task)
 
 if cmd == "comments":
     comments()
