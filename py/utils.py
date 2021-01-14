@@ -2,6 +2,8 @@ import re
 import os
 from phabricator import Phabricator
 from pprint import pprint
+import frontmatter
+from frontmatter.default_handlers import YAMLHandler
 
 phab = Phabricator()
 
@@ -84,6 +86,8 @@ def task_update(task, what):
         t.append(transaction('owner', task.assigned.phid))
     if 'points' in what:
         t.append(transaction('points', task.points))
+    if 'comment' in what:
+        t.append(transaction('comment', task.comment))
 
     if(len(t) > 0):
         phab.maniphest.edit(objectIdentifier=task.phid, transactions=t)
@@ -134,3 +138,31 @@ def phab2vimwiki(input):
         md = md + line + os.linesep
 
     return md
+
+def parse_matter(fp):
+    post = frontmatter.load(fp)
+    content = None
+    backmatter = None
+
+    if post.content.strip().endswith('+++'):
+        content = post.content.rsplit("+++", 2)
+        backmatter = content[1]
+        content = content[0]
+    else:
+        content = post.content
+        backmatter = None
+
+    # Split new comment from backmatter
+    comment = None
+    if '::: Add Comment' in backmatter:
+        comment = backmatter.split('::: Add Comment')
+        comment = comment[-1].strip().splitlines()[1:]
+        comment = "\n".join(comment).strip()
+
+
+    return {
+                'frontmatter': post.metadata,
+                'content': content,
+                'backmatter': backmatter,
+                'comment': comment
+        }

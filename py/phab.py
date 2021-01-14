@@ -2,17 +2,13 @@ import os
 import sys
 import pathlib
 
-
 from pprint import pprint
 import argparse
-from io import BytesIO, SEEK_SET
-
 import frontmatter
-from frontmatter.default_handlers import YAMLHandler
-from phabricator import Phabricator
 
 import utils
 import model
+from io import BytesIO, SEEK_SET
 
 utils.__init__()
 
@@ -26,17 +22,9 @@ def update(task):
     description=""
 
     with open(arg, 'r') as fp:
-        post = frontmatter.load(fp)
-
-        if post.content.strip().endswith('+++'):
-            content = post.content.rsplit("+++", 2)
-            backmatter = content[1]
-            content = content[0]
-        else:
-            content = post.content
-            backmatter = None
-
-        description = utils.vimwiki2phab(content)
+        matter = utils.parse_matter(fp)
+        post = matter['frontmatter']
+        description = utils.vimwiki2phab(matter['content'])
 
         t = model.Task(None)
         t.phid = utils.phid_lookup(task)
@@ -49,6 +37,9 @@ def update(task):
         if('assigned' in post):
                 t.assigned = post['assigned']
 
+        if len(matter['comment']):
+                t.comment = matter['comment']
+
         t.commit()
 
 
@@ -58,7 +49,6 @@ def sync(task):
     post = None
     with open(arg, 'r') as fp:
         post = frontmatter.load(fp)
-
 
     with open(arg, 'w+') as fp:
         post.content = utils.phab2vimwiki(t.description)
@@ -90,7 +80,9 @@ def sync(task):
         fp.write(os.linesep)
         fp.write(os.linesep)
 
-        fp.write('+++\n')
+        fp.write('+++\n\n')
+
+        fp.write("-"*80+"\n\n")
 
         backmatter = []
         for rev in t.revisions:
@@ -100,15 +92,14 @@ def sync(task):
                 title = utils.strike(title)
             backmatter.append("{} - {} - {}\n".format(rev.name, status, title))
 
-        backmatter.append("\n" + (80*"=") + "\n")
         backmatter.append("Comments:\n")
         backmatter.append("" + (80*"=") + "\n\n")
 
         for comment in t.comments:
             if comment.removed:
                 continue
-            info = "{} wrote:".format(comment.author.username)
-            created = str(comment.created)
+            info = "{} ({}):".format(comment.author.name, comment.author.username)
+            created = "`{}`".format(str(comment.created))
             indent = 80 - len(info) - len(created)
             info = info + " "*indent + created + "\n"
 
@@ -117,6 +108,9 @@ def sync(task):
             for line in comment.text.splitlines():
                 backmatter.append("{}\n".format(line))
             backmatter.append("\n")
+
+        backmatter.append("::: Add Comment\n")
+        backmatter.append("-"*80+"\n\n")
 
         fp.write("".join(backmatter))
         fp.write('\n+++\n')
@@ -152,14 +146,10 @@ def diff_approve(diff_name):
     result = phab.differential.revision.edit(objectIdentifier=diff_name, transactions=transactions)
     pprint(result)
 
-def comments():
-    t = phab.transaction.search(objectIdentifier="T31334")#phab.maniphest.query(ids=[task_string_to_id(task)])
-    key = list(t)[0]
-    pprint(t[key])
-
 def comment():
-    transactions=[]
-    phab.maniphest.edit(objectIdentifier=task, transactions=transactions)
+    with open(arg, 'r') as fp:
+        post = frontmatter.load(fp)
+
 
 def create():
     tid = phab.maniphest.createtask(title=arg)
@@ -167,6 +157,7 @@ def create():
 
 if cmd == "update":
     update(task)
+    sync(task)
 
 if cmd == "sync":
     sync(task)
@@ -183,8 +174,8 @@ if cmd == "diff":
 if cmd == "diff-approve":
     diff_approve(task)
 
-if cmd == "comments":
-    comments()
+if cmd == "comment":
+    comment()
 
 if cmd == "revisions":
     revisions(task)

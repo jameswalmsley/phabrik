@@ -7,6 +7,7 @@ phid_cache = {}
 
 class User:
     raw = None
+    realName = None
     username = None
     name = None
     phid = None
@@ -30,10 +31,16 @@ class User:
         raw = utils.get_users([phid])
         if(len(raw) > 0):
             return User(raw[0])
+
         user = User(None)
         user.phid = phid
         user.username = phid
         user.name = phid
+
+        if "PHID-APPS" in phid:
+            user.name = "Phabricator"
+            user.username = "herald"
+
         return user
 
 class Comment:
@@ -216,6 +223,8 @@ class Task(object):
     __transactions = None
     __comments = None
 
+    comment = None
+
     def __init__(self, raw):
         if(raw):
             self.raw = raw
@@ -314,6 +323,8 @@ class Task(object):
             what['assigned'] = True
         if(self.__attached_project_phids):
             what['attach-projects'] = True
+        if(self.comment):
+            what['comment'] = True
 
         utils.task_update(self, what)
 
