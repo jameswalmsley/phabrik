@@ -2,6 +2,7 @@ import os
 import sys
 import pathlib
 
+
 from pprint import pprint
 import argparse
 from io import BytesIO, SEEK_SET
@@ -52,8 +53,7 @@ def update(task):
 
 
 def sync(task):
-    phid = utils.phid_lookup(task)
-    t = model.Task(phid)
+    t = model.Task.fromName(task)
 
     post = None
     with open(arg, 'r') as fp:
@@ -65,6 +65,24 @@ def sync(task):
         if t.assigned:
             post['assigned'] = t.assigned.username
         post['author'] = t.author.username
+
+        if t.points:
+            post['points'] = t.points
+
+        if t.projects:
+            tags = []
+            projects = []
+            for proj in t.projects:
+                if proj.slug:
+                    tags.append(proj.slug.replace("_-_", "-"))
+                else:
+                    projects.append(proj.name.replace("_-_", "-"))
+            post['tags'] = tags
+            post['projects'] = projects
+
+        if t.title:
+            post['title'] = t.title
+
         f = BytesIO()
         frontmatter.dump(post, f)
         fp.seek(0, SEEK_SET)
@@ -80,9 +98,27 @@ def sync(task):
             title = rev.title
             if(rev.closed):
                 title = utils.strike(title)
-            backmatter.append("{} - {} - {}".format(rev.name, status, title))
+            backmatter.append("{} - {} - {}\n".format(rev.name, status, title))
 
-        fp.write("\n".join(backmatter))
+        backmatter.append("\n" + (80*"=") + "\n")
+        backmatter.append("Comments:\n")
+        backmatter.append("" + (80*"=") + "\n\n")
+
+        for comment in t.comments:
+            if comment.removed:
+                continue
+            info = "{} wrote:".format(comment.author.username)
+            created = str(comment.created)
+            indent = 80 - len(info) - len(created)
+            info = info + " "*indent + created + "\n"
+
+            backmatter.append(info)
+            backmatter.append("" + (80*"-") + "\n\n")
+            for line in comment.text.splitlines():
+                backmatter.append("{}\n".format(line))
+            backmatter.append("\n")
+
+        fp.write("".join(backmatter))
         fp.write('\n+++\n')
         fp.write(os.linesep)
 
@@ -152,6 +188,18 @@ if cmd == "comments":
 
 if cmd == "revisions":
     revisions(task)
+
+if cmd == "task":
+    task = model.Task.fromName(task)
+    transactions = task.comments
+    for t in transactions:
+        if t.author:
+            pprint(t.author.name)
+        print(t.comment)
+        print()
+
+if cmd == "project":
+    utils.slug_lookup(task)
 
 if cmd == "patch":
     # Use git apply --check to test if patch can be cleanly applied.

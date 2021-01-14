@@ -14,13 +14,23 @@ def phid_lookup(name):
         return result[name]['phid']
     return None
 
-def get_task(phid):
-    result = phab.maniphest.search(constraints={'phids':[phid]})
-    return result['data'][0]
+def slug_lookup(slug):
+    result = phab.project.search(constraints={'slugs':[slug]})
+    pprint(result)
 
-def get_user(phid):
-    result = phab.user.search(constraints={'phids':[phid]})
-    return result['data'][0]
+def get_phid_transactions(phid):
+    result = phab.transaction.search(objectIdentifier=phid, constraints={})
+    return result['data']
+
+def get_tasks(phids):
+    if phids and len(phids) > 0:
+        result = phab.maniphest.search(constraints={'phids':phids}, attachments={'projects': True})
+        return result['data']
+    return []
+
+def get_users(phids):
+    result = phab.user.search(constraints={'phids':phids})
+    return result['data']
 
 def get_username(username):
     result = phab.user.search(constraints={'usernames':[username]})
@@ -49,6 +59,17 @@ def task_get_revision_phids(phid):
         phids.append(item['destinationPHID'])
 
     return phids
+
+def task_get_mentions(phid):
+    phids = []
+    result = phab.edge.search(sourcePHIDs=[phid], types=["mention"])
+    for item in result.data:
+        phids.append(item['destinationPHID'])
+    return phids
+
+def get_project(phid):
+    result = phab.project.search(constraints={'phids': [phid]})
+    return result['data'][0]
 
 def transaction(type, value):
         return {'type': type, 'value': value}
