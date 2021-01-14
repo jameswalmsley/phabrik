@@ -65,12 +65,18 @@ local function approve_diff()
 	phab_command("diff-approve", diffname, "test")
 end
 
+local function apply_patch()
+	diffname = api.nvim_buf_get_var(0, 'diff-num')
+	phab_command("patch", diffname, "test")
+end
+
 return {
 	update_task = update_task,
 	sync_task = sync_task,
 	create_task = create_task,
 	get_diff = get_diff,
 	approve_diff = approve_diff,
+	apply_patch = apply_patch,
 	get_path = get_path
 }
 

@@ -1,6 +1,8 @@
 import re
 import os
 import sys
+import pathlib
+
 from pprint import pprint
 import argparse
 from io import BytesIO, SEEK_SET
@@ -8,6 +10,8 @@ from io import BytesIO, SEEK_SET
 import frontmatter
 from frontmatter.default_handlers import YAMLHandler
 from phabricator import Phabricator
+
+spath = pathlib.Path(__file__).parent.absolute()
 
 cmd = sys.argv[1]
 task = sys.argv[2]
@@ -211,15 +215,32 @@ def revisions():
 
     print()
 
-def diff(diff_name):
+def get_base_ref(refs):
+    for ref in refs:
+        if ref['type'] == 'base':
+            return ref['identifier']
+    return None
+
+def domain():
+    return phab.user.whoami()['primaryEmail'].split('@')[1]
+
+def get_user(phid):
+    return phab.user.search(constraints={'phids':[phid]})['data'][0]['fields']
+
+def rawdiff(diff_name):
     phid, rev = revision_get_diff_phid(diff_name)
     diff = phab.differential.diff.search(constraints={'phids': [phid]})
     diffid = diff['data'][0]['id']
     rawdiff = phab.differential.getrawdiff(diffID="{}".format(diffid))
     commit_message = revision_get_commit_message(diff_name)
-    print("From:")
-    print("Subject:{}".format(commit_message.splitlines()[0]))
-    print(commit_message)
+    base = get_base_ref(diff['data'][0]['fields']['refs'])
+    user = get_user(rev['data'][0]['fields']['authorPHID'])
+    domain()
+    print("From: {}  Mon Sep 17 00:00:00 2001".format(base))
+    print("From: {} <{}@{}>".format(user['realName'], user['username'], domain()))
+    commitlines = commit_message.splitlines()
+    print("Subject: [PATCH] {}".format(commitlines[0]))
+    print("\n".join(commitlines[1:]))
     print()
     print("---")
     print()
@@ -260,7 +281,7 @@ if cmd == "query":
     query()
 
 if cmd == "diff":
-    diff(task)
+    rawdiff(task)
 
 if cmd == "diff-approve":
     diff_approve(task)
@@ -272,5 +293,7 @@ if cmd == "revisions":
     revisions()
 
 if cmd == "patch":
-    patch(task)
-    #os.system("arc patch --nobranch --allow-untracked {}".format(task))
+    # Use git apply --check to test if patch can be cleanly applied.
+    phabdiff = "python3 {} diff {} test".format(str(spath) + "/phab.py", task)
+    os.system("{} | git am --keep-non-patch -3".format(phabdiff))
+
