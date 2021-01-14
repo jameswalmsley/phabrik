@@ -14,3 +14,19 @@ pip3 install python-frontmatter
 Plug 'jameswalmsley/nvim-phabricator'
 ```
 
+## Features
+
+  * Tasks
+    * View Task
+    * Read Task Comments
+    * Add new comments
+    * Read Task revisions.
+    * Change points
+    * View / Change assignee
+    * View Tags
+    * View Projects
+
+  * Revisions
+    * View Diffs
+    * Patch Diffs
+
