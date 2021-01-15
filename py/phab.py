@@ -73,7 +73,7 @@ def approve(args):
 @subcommand([argument('diff')])
 def patch(args):
     # Use git apply --check to test if patch can be cleanly applied.
-    phabdiff = "python3 {} diff {} test".format(str(spath) + "/phab.py", args.diff)
+    phabdiff = "python3 {} diff {}".format(str(spath) + "/phab.py", args.diff)
     os.system("{} | git am --keep-non-patch -3".format(phabdiff))
 
 if __name__ == '__main__':
