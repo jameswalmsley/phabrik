@@ -47,8 +47,9 @@ local function get_diff()
 	local diffnum = vim.fn.expand('<cWORD>')
 
 	local buf = api.nvim_create_buf(true, true) -- create new emtpy buffer
-	--api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+	api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
 	api.nvim_buf_set_var(buf, 'diff-num', diffnum)
+	api.nvim_buf_set_name(buf, "" .. diffnum)
 
 
 	local diff = phab_commandlist("diff", diffnum)
