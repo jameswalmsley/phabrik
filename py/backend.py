@@ -127,8 +127,6 @@ class Backend(object):
         tid = utils.task_create(title)
         print('T'+tid['id']+'.md')
 
-    def diff_approve(self, diff_name):
-        transactions.append({'type': 'accept', 'value': True})
-        print(diff_name, transactions)
-        result = phab.differential.revision.edit(objectIdentifier=diff_name, transactions=transactions)
-        pprint(result)
+    def approve_revision(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.approve_revision(phid)

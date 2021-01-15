@@ -59,8 +59,11 @@ def sync(args):
 def create(args):
     backend.create(args.title)
 
-@subcommand([argument('diff')])
+@subcommand([argument('diff'),
+argument('--approve', action="store_true")])
 def diff(args):
+    if(args.approve):
+        return backend.approve_revision(args.diff)
     backend.rawdiff(args.diff)
 
 @subcommand([argument('diff')])

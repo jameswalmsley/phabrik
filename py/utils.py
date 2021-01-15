@@ -42,6 +42,12 @@ def get_revision(phid):
     result = phab.differential.revision.search(constraints={'phids':[phid]})
     return result['data'][0]
 
+def approve_revision(phid):
+        transactions=[]
+        transactions.append({'type': 'accept', 'value': True})
+        result = phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
+        pprint(result)
+
 def get_diff(phid):
     result = phab.differential.diff.search(constraints={'phids':[phid]})
     return result['data'][0]

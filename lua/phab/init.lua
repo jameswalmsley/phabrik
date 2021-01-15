@@ -17,26 +17,26 @@ local function get_task_id()
 	return name
 end
 
-local function phab_command(command, task, args)
-	return vim.fn.system("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. task .. " " .. args)
+local function phab_command(command, args)
+	return vim.fn.system("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. args)
 end
 
-local function phab_commandlist(command, task, args)
-	return vim.fn.systemlist("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. task .. " " .. args)
+local function phab_commandlist(command, args)
+	return vim.fn.systemlist("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. args)
 end
 
 local function update_task()
 	vim.api.nvim_command("write")
-	phab_command("update", get_task_id(), get_file_path())
+	phab_command("update", get_task_id() .. " " .. get_file_path())
 end
 
 local function sync_task()
-	phab_command("sync", get_task_id(), get_file_path())
+	phab_command("sync", get_task_id() .. " " .. get_file_path())
 end
 
 local function create_task()
 	local title = vim.fn.input("Task Title > ")
-	local output = phab_command("create", "Txxx", string.format("\"%s\"", title))
+	local output = phab_command("create", "Txxx " .. string.format("\"%s\"", title))
 	local path = string.format("%s/%s", get_file_folder(), output)
 	vim.api.nvim_command("edit " .. path)
 end
@@ -51,7 +51,7 @@ local function get_diff()
 	api.nvim_buf_set_var(buf, 'diff-num', diffnum)
 
 
-	local diff = phab_commandlist("diff", diffnum, "test")
+	local diff = phab_commandlist("diff", diffnum)
 	api.nvim_buf_set_lines(buf, 0, -1, false, diff)
 
 	api.nvim_buf_set_option(buf, 'filetype', 'diff')
@@ -62,13 +62,13 @@ local function get_diff()
 end
 
 local function approve_diff()
-	diffname = api.nvim_buf_get_var(0, 'diff-num')
-	phab_command("diff-approve", diffname, "test")
+	local diffname = api.nvim_buf_get_var(0, 'diff-num')
+	phab_command("diff", "--approve " .. diffname)
 end
 
 local function apply_patch()
-	diffname = api.nvim_buf_get_var(0, 'diff-num')
-	phab_command("patch", diffname, "test")
+	local diffname = api.nvim_buf_get_var(0, 'diff-num')
+	phab_command("patch", diffname)
 end
 
 return {
