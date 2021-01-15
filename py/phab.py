@@ -1,199 +1,79 @@
 import os
 import sys
 import pathlib
-
-from pprint import pprint
 import argparse
-import frontmatter
 
 import utils
-import model
-from io import BytesIO, SEEK_SET
-
-utils.__init__()
+import backend
 
 spath = pathlib.Path(__file__).parent.absolute()
 
-cmd = sys.argv[1]
-task = sys.argv[2]
-arg = sys.argv[3]
+utils.__init__()
+backend = backend.Backend()
 
-def update(task):
-    description=""
+parser = argparse.ArgumentParser()
+subparsers = parser.add_subparsers(dest="subcommand")
 
-    with open(arg, 'r') as fp:
-        matter = utils.parse_matter(fp)
-        post = matter['frontmatter']
-        description = utils.vimwiki2phab(matter['content'])
+def subcommand(args=[], parent=subparsers):
+    """Decorator to add to functions.
+    See https://mike.depalatis.net/blog/simplifying-argparse.html
+    """
+    def decorator(func):
+        parser = parent.add_parser(func.__name__, description=func.__doc__)
+        for arg in args:
+            parser.add_argument(*arg[0], **arg[1])
+        parser.set_defaults(func=func)
+    return decorator
 
-        t = model.Task(None)
-        t.phid = utils.phid_lookup(task)
-        t.description = description
-
-        if('title' in post):
-                t.title = post['title']
-        if('points' in post):
-                t.points = post['points']
-        if('assigned' in post):
-                t.assigned = post['assigned']
-
-        if len(matter['comment']):
-                t.comment = matter['comment']
-
-        t.commit()
+def argument(*name_or_flags, **kwargs):
+    """Helper function to satisfy argparse.ArgumentParser.add_argument()'s
+    input argument syntax"""
+    return (list(name_or_flags), kwargs)
 
 
-def sync(task):
-    t = model.Task.fromName(task)
+def main():
+    # Try to obtain version
+    __version__ = '0.0.0'
 
-    post = None
-    with open(arg, 'r') as fp:
-        post = frontmatter.load(fp)
+    parser.add_argument('-v', '--version', action='version', version=__version__)
 
-    with open(arg, 'w+') as fp:
-        post.content = utils.phab2vimwiki(t.description)
-        if t.assigned:
-            post['assigned'] = t.assigned.username
-        post['author'] = t.author.username
+    args = parser.parse_args()
+    if args.subcommand is None:
+        parser.print_help()
+    else:
+        args.func(args)
 
-        if t.points:
-            post['points'] = t.points
+@subcommand([argument('task', help="Task number e.g. T123"),
+             argument('source', help="Task source file")])
+def update(args):
+    backend.update(args.task, args.source)
+    backend.sync(args.task, args.source)
 
-        if t.projects:
-            tags = []
-            projects = []
-            for proj in t.projects:
-                if proj.slug:
-                    tags.append(proj.slug.replace("_-_", "-"))
-                else:
-                    projects.append(proj.name.replace("_-_", "-"))
-            post['tags'] = tags
-            post['projects'] = projects
+@subcommand([argument('task', help="Task number e.g. T123"),
+             argument('source', help="Task source file")])
 
-        if t.title:
-            post['title'] = t.title
+def sync(args):
+    backend.sync(args.task, args.source)
 
-        f = BytesIO()
-        frontmatter.dump(post, f)
-        fp.seek(0, SEEK_SET)
-        fp.write(f.getvalue().decode('utf-8'))
-        fp.write(os.linesep)
-        fp.write(os.linesep)
+@subcommand([argument('title')])
+def create(args):
+    backend.create(args.title)
 
-        fp.write('+++\n\n')
+@subcommand([argument('diff')])
+def diff(args):
+    backend.rawdiff(args.diff)
 
-        fp.write("-"*80+"\n\n")
+@subcommand([argument('diff')])
+def approve(args):
+    backend.approve(args.diff)
 
-        backmatter = []
-        for rev in t.revisions:
-            status = utils.get_status_symbol(rev.status)
-            title = rev.title
-            if(rev.closed):
-                title = utils.strike(title)
-            backmatter.append("{} - {} - {}\n".format(rev.name, status, title))
-
-        backmatter.append("Comments:\n")
-        backmatter.append("" + (80*"=") + "\n\n")
-
-        for comment in t.comments:
-            if comment.removed:
-                continue
-            info = "{} ({}):".format(comment.author.name, comment.author.username)
-            created = "`{}`".format(str(comment.created))
-            indent = 80 - len(info) - len(created)
-            info = info + " "*indent + created + "\n"
-
-            backmatter.append(info)
-            backmatter.append("" + (80*"-") + "\n\n")
-            for line in comment.text.splitlines():
-                backmatter.append("{}\n".format(line))
-            backmatter.append("\n")
-
-        backmatter.append("::: Add Comment\n")
-        backmatter.append("-"*80+"\n\n")
-
-        fp.write("".join(backmatter))
-        fp.write('\n+++\n')
-        fp.write(os.linesep)
-
-
-def revisions(task):
-    phid = utils.phid_lookup(task)
-    t = model.Task(phid)
-    for rev in t.revisions:
-        print(rev.name, end=' ')
-    print()
-
-def rawdiff(diff_name):
-    phid = utils.phid_lookup(diff_name)
-    r = model.Revision(phid)
-
-    commit_message = r.commitmessage
-
-    print("From: {}  Mon Sep 17 00:00:00 2001".format(r.diff.base))
-    print("From: {} <{}@{}>".format(r.diff.author.name, r.diff.author.username, utils.domain()))
-    commitlines = commit_message.splitlines()
-    print("Subject: [PATCH] {}".format(commitlines[0]))
-    print("\n".join(commitlines[1:]))
-    print()
-    print("---")
-    print()
-    print(r.diff.rawdiff[:])
-
-def diff_approve(diff_name):
-    transactions.append({'type': 'accept', 'value': True})
-    print(diff_name, transactions)
-    result = phab.differential.revision.edit(objectIdentifier=diff_name, transactions=transactions)
-    pprint(result)
-
-def comment():
-    with open(arg, 'r') as fp:
-        post = frontmatter.load(fp)
-
-
-def create():
-    tid = phab.maniphest.createtask(title=arg)
-    print('T'+tid['id']+'.md')
-
-if cmd == "update":
-    update(task)
-    sync(task)
-
-if cmd == "sync":
-    sync(task)
-
-if cmd == "create":
-    create()
-
-if cmd == "query":
-    query()
-
-if cmd == "diff":
-    rawdiff(task)
-
-if cmd == "diff-approve":
-    diff_approve(task)
-
-if cmd == "comment":
-    comment()
-
-if cmd == "revisions":
-    revisions(task)
-
-if cmd == "task":
-    task = model.Task.fromName(task)
-    transactions = task.comments
-    for t in transactions:
-        if t.author:
-            pprint(t.author.name)
-        print(t.comment)
-        print()
-
-if cmd == "project":
-    utils.slug_lookup(task)
-
-if cmd == "patch":
+@subcommand([argument('diff')])
+def patch(args):
     # Use git apply --check to test if patch can be cleanly applied.
-    phabdiff = "python3 {} diff {} test".format(str(spath) + "/phab.py", task)
+    phabdiff = "python3 {} diff {} test".format(str(spath) + "/phab.py", args.diff)
     os.system("{} | git am --keep-non-patch -3".format(phabdiff))
+
+if __name__ == '__main__':
+    main()
+    sys.exit(1)
 

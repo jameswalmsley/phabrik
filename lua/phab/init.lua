@@ -26,6 +26,7 @@ local function phab_commandlist(command, task, args)
 end
 
 local function update_task()
+	vim.api.nvim_command("write")
 	phab_command("update", get_task_id(), get_file_path())
 end
 

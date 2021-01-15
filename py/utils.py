@@ -69,6 +69,9 @@ def task_get_mentions(phid):
         phids.append(item['destinationPHID'])
     return phids
 
+def task_create(title):
+    return phab.maniphest.createtask(title=title)
+
 def get_project(phid):
     result = phab.project.search(constraints={'phids': [phid]})
     return result['data'][0]
