@@ -84,6 +84,9 @@ class Backend(object):
                     title = utils.strike(title)
                 backmatter.append("{} - {} - {}\n".format(rev.name, status, title))
 
+            backmatter.append("\n")
+            backmatter.append("-"*80+"\n\n")
+
             backmatter.append("Comments:\n")
             backmatter.append("" + (80*"=") + "\n\n")
 
