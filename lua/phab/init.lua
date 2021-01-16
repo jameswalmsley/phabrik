@@ -46,29 +46,33 @@ local api = vim.api
 local function get_diff()
 	local diffnum = vim.fn.expand('<cWORD>')
 
-	local buf = api.nvim_create_buf(true, true) -- create new emtpy buffer
-	api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-	api.nvim_buf_set_var(buf, 'diff-num', diffnum)
-	api.nvim_buf_set_name(buf, "" .. diffnum)
+	local buf = vim.fn.bufnr(diffnum, 1)
+
+	vim.fn.setbufvar(buf, '&bufhidden', 'wipe')
+	vim.fn.setbufvar(buf, '&buftype', 'nofile')
+	vim.fn.setbufvar(buf, '&buflisted', 1)
+	vim.fn.setbufvar(buf, 'diffnum', diffnum)
 
 
 	local diff = phab_commandlist("diff", diffnum)
 	api.nvim_buf_set_lines(buf, 0, -1, false, diff)
 
-	api.nvim_buf_set_option(buf, 'filetype', 'diff')
-	api.nvim_buf_set_option(buf, 'modifiable', false)
+	vim.fn.setbufvar(buf, '&filetype', 'diff')
+	vim.fn.setbufvar(buf, '&modifiable', 0)
 
-	api.nvim_command("buffer " ..buf)
+	local command = buf .. "bufdo file " .. vim.fn.fnameescape(diffnum)
+	vim.fn.execute(command)
+	vim.fn.execute(buf .. "buffer")
 
 end
 
 local function approve_diff()
-	local diffname = api.nvim_buf_get_var(0, 'diff-num')
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--approve " .. diffname)
 end
 
 local function apply_patch()
-	local diffname = api.nvim_buf_get_var(0, 'diff-num')
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("patch", diffname)
 end
 
