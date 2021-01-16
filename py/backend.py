@@ -74,9 +74,10 @@ class Backend(object):
 
             fp.write('+++\n\n')
 
-            fp.write("-"*80+"\n\n")
 
             backmatter = []
+            backmatter.append("Revisions:\n")
+            backmatter.append("="*80+"\n\n")
 
             backmatter.append("Key: ")
             for i, (status, symbol) in enumerate(utils.status_symbols.items()):
@@ -85,8 +86,8 @@ class Backend(object):
 
                 backmatter.append("{} - {:<16} ".format(symbol, status))
 
-
             backmatter.append("\n\n")
+            backmatter.append("-"*80+"\n\n")
 
             for rev in t.revisions:
                 status = utils.get_status_symbol(rev.status)
