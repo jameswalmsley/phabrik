@@ -117,7 +117,7 @@ class Backend(object):
         commit_message = r.commitmessage
 
         print("From: {}  Mon Sep 17 00:00:00 2001".format(r.diff.base))
-        print("From: {} <{}@{}>".format(r.diff.author.name, r.diff.author.username, utils.domain()))
+        print("From: {} <{}@{}>".format(r.author.name, r.author.username, utils.domain()))
         commitlines = commit_message.splitlines()
         print("Subject: [PATCH] {}".format(commitlines[0]))
         print("\n".join(commitlines[1:]))
