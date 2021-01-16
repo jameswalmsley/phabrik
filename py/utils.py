@@ -3,6 +3,7 @@ import os
 from phabricator import Phabricator
 from pprint import pprint
 import frontmatter
+import email
 from frontmatter.default_handlers import YAMLHandler
 
 phab = Phabricator()
@@ -155,6 +156,9 @@ def justify_strings(left, right, length):
     indent = length - l - r
     space = " "*indent
     return f"{left}{space}{right}"
+
+def rfc2822(datetime):
+    return email.utils.format_datetime(datetime)
 
 def parse_matter(fp):
     post = frontmatter.load(fp)

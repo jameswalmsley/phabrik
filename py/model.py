@@ -160,6 +160,7 @@ class Revision:
     __author = None
     diffPHID = None
     __transactions = None
+    created = None
 
     def __init__(self, phid):
         self.raw = utils.get_revision(phid)
@@ -170,6 +171,7 @@ class Revision:
         self.__dict__.update(r['fields'])
         self.closed = self.status['closed']
         self.status = self.status['value']
+        self.created = datetime.fromtimestamp(self.dateCreated)
         phid_cache[self.phid] = self
 
     @property
