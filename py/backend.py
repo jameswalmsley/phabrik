@@ -1,13 +1,17 @@
 import os
+
+from frontmatter.default_handlers import YAMLHandler
 import utils
 import model
 import frontmatter
 from pprint import pprint
 from io import BytesIO, SEEK_SET
+import jinja2
 
 class Backend(object):
-    def __init__(self):
-        return
+    def __init__(self, spath):
+        self.templateLoader = jinja2.FileSystemLoader(searchpath=spath+"/templates")
+        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
 
     def update(self, task, file):
         description=""
@@ -38,6 +42,8 @@ class Backend(object):
     def sync(self,task, file):
         t = model.Task.fromName(task)
 
+        template = self.templateEnv.get_template("task.md")
+
         post = None
         with open(file, 'r') as fp:
             post = frontmatter.load(fp)
@@ -65,62 +71,12 @@ class Backend(object):
             if t.title:
                 post['title'] = t.title
 
-            f = BytesIO()
-            frontmatter.dump(post, f)
-            fp.seek(0, SEEK_SET)
-            fp.write(f.getvalue().decode('utf-8'))
-            fp.write(os.linesep)
-            fp.write(os.linesep)
+            yh = YAMLHandler()
+            fm = yh.export(post.metadata)
 
-            fp.write('+++\n\n')
+            outputText = template.render(frontmatter=fm, description=post.content, task=t, utils=utils)
+            fp.write(outputText)
 
-
-            backmatter = []
-            backmatter.append("Revisions:\n")
-            backmatter.append("="*80+"\n\n")
-
-            backmatter.append("Key: ")
-            for i, (status, symbol) in enumerate(utils.status_symbols.items()):
-                if i % 4 == 0 and i > 0:
-                    backmatter.append("\n     ")
-
-                backmatter.append("{} - {:<16} ".format(symbol, status))
-
-            backmatter.append("\n\n")
-            backmatter.append("-"*80+"\n\n")
-
-            for rev in t.revisions:
-                status = utils.get_status_symbol(rev.status)
-                title = rev.title
-                if(rev.closed):
-                    title = utils.strike(title)
-                backmatter.append("{} - {} - {}\n".format(rev.name, status, title))
-
-            backmatter.append("\n")
-            backmatter.append("-"*80+"\n\n")
-
-            backmatter.append("Comments:\n")
-            backmatter.append("" + (80*"=") + "\n\n")
-
-            for comment in t.comments:
-                if comment.removed:
-                    continue
-                info = "{} ({}):".format(comment.author.name, comment.author.username)
-                created = "`{}`".format(str(comment.created))
-                indent = 80 - len(info) - len(created)
-                info = info + " "*indent + created + "\n"
-
-                backmatter.append(info)
-                backmatter.append("" + (80*"-") + "\n\n")
-                for line in comment.text.splitlines():
-                    backmatter.append("{}\n".format(line))
-                backmatter.append("\n")
-
-            backmatter.append("::: Add Comment\n")
-            backmatter.append("-"*80+"\n\n")
-
-            fp.write("".join(backmatter))
-            fp.write('\n+++\n\n')
 
     def rawdiff(self, diff_name):
         phid = utils.phid_lookup(diff_name)

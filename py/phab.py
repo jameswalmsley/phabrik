@@ -9,7 +9,7 @@ import backend
 spath = pathlib.Path(__file__).parent.absolute()
 
 utils.__init__()
-backend = backend.Backend()
+backend = backend.Backend(str(spath))
 
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(dest="subcommand")

@@ -66,7 +66,7 @@ class Comment:
         for t in ts:
             if t.type == 'comment':
                 comments.append(Comment(t.raw['comments'][0]))
-        return reversed(comments)
+        return comments
 
 class Transaction:
     phid = None

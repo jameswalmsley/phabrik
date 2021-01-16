@@ -148,6 +148,14 @@ def phab2vimwiki(input):
 
     return md
 
+def justify_strings(left, right, length):
+    right=str(right)
+    l = len(left)
+    r = len(right)
+    indent = length - l - r
+    space = " "*indent
+    return f"{left}{space}{right}"
+
 def parse_matter(fp):
     post = frontmatter.load(fp)
     content = None
