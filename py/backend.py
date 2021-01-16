@@ -82,17 +82,10 @@ class Backend(object):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision(phid)
 
-        commit_message = r.commitmessage
-
-        print("From: {}  Mon Sep 17 00:00:00 2001".format(r.diff.base))
-        print("From: {} <{}@{}>".format(r.author.name, r.author.username, utils.domain()))
-        commitlines = commit_message.splitlines()
-        print("Subject: [PATCH] {}".format(commitlines[0]))
-        print("\n".join(commitlines[1:]))
-        print()
-        print("---")
-        print()
-        print(r.diff.rawdiff[:])
+        template = self.templateEnv.get_template("rawdiff.diff")
+        output = template.render(r=r, utils=utils)
+        print(output)
+        return 0
 
     def create(self, title):
         tid = utils.task_create(title)
