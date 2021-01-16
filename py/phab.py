@@ -41,7 +41,7 @@ def main():
     if args.subcommand is None:
         parser.print_help()
     else:
-        args.func(args)
+        return args.func(args)
 
 @subcommand([argument('task', help="Task number e.g. T123"),
              argument('source', help="Task source file")])
@@ -64,7 +64,7 @@ argument('--approve', action="store_true")])
 def diff(args):
     if(args.approve):
         return backend.approve_revision(args.diff)
-    backend.rawdiff(args.diff)
+    return backend.rawdiff(args.diff)
 
 @subcommand([argument('diff')])
 def approve(args):
@@ -77,6 +77,5 @@ def patch(args):
     os.system("{} | git am --keep-non-patch -3".format(phabdiff))
 
 if __name__ == '__main__':
-    main()
-    sys.exit(1)
+    sys.exit(main())
 
