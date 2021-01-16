@@ -105,13 +105,13 @@ def domain():
     return phab.user.whoami()['primaryEmail'].split('@')[1]
 
 status_symbols = {
+    'published': '🟣',
     'accepted':'🟢',
     'needs-review': '🟠',
-    'needs-revision': '🔨',
-    'published': '🟣',
-    'abandoned': '🛫',
     'draft': '🔵',
-    'changes-planned': '🔴'
+    'changes-planned': '🔴',
+    'needs-revision': '🔨',
+    'abandoned': '🛫',
 }
 
 def get_status_symbol(status):
