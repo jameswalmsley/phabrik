@@ -2,6 +2,7 @@ import utils
 from pprint import pprint
 from pprint import pformat
 from datetime import datetime
+import unidiff
 
 phid_cache = {}
 
@@ -123,9 +124,11 @@ class Diff:
     raw = None
     id = None
     phid = None
-    __rawdiff = None
     base = None
     __author = None
+    __rawdiff = None # Raw diff output from phabricator.
+    __unidiff = None # Unidiff object of parsed raw diff.
+    __diff = None # Ordered diff output from unidiff.
 
     def __init__(self, phid):
         self.raw = utils.get_diff(phid)
@@ -149,6 +152,23 @@ class Diff:
         if not self.__author:
             self.__author = User.fromPHID(self.raw['fields']['authorPHID'])
         return self.__author
+
+    @property
+    def unidiff(self):
+        if not self.__unidiff:
+            self.__unidiff = unidiff.PatchSet.from_string(self.rawdiff)
+        return self.__unidiff
+
+    @property
+    def diff(self):
+        if not self.__diff:
+            self.__diff = ""
+            for patch in reversed(self.unidiff):
+                self.__diff = self.__diff + str(patch) + "\n"
+            self.__diff = self.__diff.strip()
+
+        return self.__diff
+
 
 class Revision:
     phid = None

@@ -5,6 +5,6 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 {{"\n".join(r.commitmessage.splitlines()[1:])}}
 ---
 
-{{r.diff.rawdiff}}
+{{r.diff.diff}}
 --
 2.30.0
