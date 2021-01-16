@@ -23,7 +23,7 @@ class Backend(object):
 
             t = model.Task(None)
             t.phid = utils.phid_lookup(task)
-            t.description = description
+            t.description = description.strip()
 
             if('title' in post):
                     t.title = post['title']
@@ -74,7 +74,7 @@ class Backend(object):
             yh = YAMLHandler()
             fm = yh.export(post.metadata)
 
-            outputText = template.render(frontmatter=fm, description=post.content, task=t, utils=utils)
+            outputText = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
             fp.write(outputText)
 
 
