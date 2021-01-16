@@ -19,11 +19,11 @@ class Backend(object):
         with open(file, 'r') as fp:
             matter = utils.parse_matter(fp)
             post = matter['frontmatter']
-            description = utils.vimwiki2phab(matter['content'])
+            description = utils.vimwiki2phab(matter['content']).strip()
 
             t = model.Task(None)
             t.phid = utils.phid_lookup(task)
-            t.description = description.strip()
+            t.description = description
 
             if('title' in post):
                     t.title = post['title']

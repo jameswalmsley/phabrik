@@ -141,7 +141,7 @@ class Diff:
     @property
     def rawdiff(self):
         if not self.__rawdiff:
-            self.__rawdiff = utils.get_rawdiff(self.id);
+            self.__rawdiff = utils.get_rawdiff(self.id).strip();
         return self.__rawdiff
 
     @property
@@ -183,7 +183,7 @@ class Revision:
     @property
     def commitmessage(self):
         if not self.__commitmessage:
-            self.__commitmessage = utils.get_commitmessage(self.id)
+            self.__commitmessage = utils.get_commitmessage(self.id).strip()
         return self.__commitmessage
 
     @property
@@ -234,7 +234,7 @@ class Task(object):
             self.id = r['id']
             self.phid = r['phid']
             self.__dict__.update(r['fields'])
-            self.description = r['fields']['description']['raw']
+            self.description = r['fields']['description']['raw'].strip()
             if self.points:
                 self.points = int(self.points)
             self.title = self.name
