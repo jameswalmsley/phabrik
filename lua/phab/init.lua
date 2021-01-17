@@ -158,7 +158,9 @@ local function diff_close_comment()
 end
 
 local function install()
-	return vim.fn.system("python3 -m pip install --target " .. get_path() .. "/py/packages python-frontmatter unidiff phabricator")
+	local packages = "python-frontmatter unidiff phabricator"
+	local cmd = "python3 -m pip install --target=" .. get_path() .. "/py/packages " .. packages
+	return vim.fn.system(cmd)
 end
 
 return {
