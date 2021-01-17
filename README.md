@@ -1,6 +1,6 @@
-# Phabulous
+# Phabrik
 
-Phabulous is a toolkit for developers to interact with Phabricator. Its main focus is to
+Phabrik is a toolkit for developers to interact with Phabricator. Its main focus is to
 allow developers to create and edit tasks without having to use the web-interface.
 
 It further allows a streamlined workflow, and supports simple interactions with repositories
@@ -8,7 +8,7 @@ and revisions.
 
 ## Plugins
 
-Currently phabulous support NeoVim, but we are moving to full ViM compatibility.
+Currently phabrik support NeoVim, but we are moving to full ViM compatibility.
 The main tooling is written in python, and can be used to create a plugin for any
 text editor.
 
@@ -30,7 +30,7 @@ Allows users to sync their phabricator tasks with vimwiki, and modify and update
 pip3 install phabricator
 pip3 install python-frontmatter
 
-Plug 'jameswalmsley/phabulous'
+Plug 'jameswalmsley/phabrik'
 ```
 
 ## Features

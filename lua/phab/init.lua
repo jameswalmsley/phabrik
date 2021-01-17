@@ -62,7 +62,7 @@ local function get_diff(diffnum)
 end
 
 local function dashboard()
-	local buf = vim.fn.bufnr("Phabulous", 1)
+	local buf = vim.fn.bufnr("Phabrik", 1)
 
 	vim.fn.setbufvar(buf, '&buftype', 'nofile')
 	vim.fn.setbufvar(buf, '&buflisted', 1)
@@ -72,7 +72,7 @@ local function dashboard()
 
 	vim.fn.setbufvar(buf, '&modifiable', 0)
 
-	local command = buf .. "bufdo file " .. vim.fn.fnameescape("Phabulous")
+	local command = buf .. "bufdo file " .. vim.fn.fnameescape("Phabrik")
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
 	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
@@ -118,7 +118,7 @@ local function navigate()
 		return get_diff(match)
 	end
 
-	print("Not a valid Phabulous link: ", word)
+	print("Not a valid Phabrik link: ", word)
 
 end
 
