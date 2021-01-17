@@ -23,7 +23,7 @@ Comments:
 ================================================================================
 
 {% for c in task.comments|reverse %}
-{{utils.justify_strings(c.author.name + " ({})".format(c.author.username), c.created, 80)}}
+{{utils.justify_strings(c.author.name + " ({})".format(c.author.username), "`{}`".format(c.created), 81)}}
 --------------------------------------------------------------------------------
 
 {{c.text}}
