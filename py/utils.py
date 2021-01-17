@@ -149,28 +149,6 @@ def strike(text):
         result = result + c + '\u0336'
     return result
 
-def vimwiki2phab(md):
-    out = ""
-    for line in md.splitlines():
-        matches = re.findall('(\[\[T\d+\]\])', line)
-        if matches:
-            for t in matches:
-                line = line.replace(t, t.replace('[','').replace(']', ''))
-        out = out + line + os.linesep
-
-    return out
-
-def phab2vimwiki(input):
-    md = ""
-    for line in input.splitlines():
-        matches = re.findall('(T\d+)', line)
-        if len(matches) > 0:
-            for t in matches:
-                line = line.replace(t, '[[' + t + ']]')
-        md = md + line + os.linesep
-
-    return md
-
 def justify_strings(left, right, length):
     right=str(right)
     l = len(left)

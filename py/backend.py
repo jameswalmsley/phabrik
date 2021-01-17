@@ -17,7 +17,7 @@ class Backend(object):
 
         matter = utils.parse_matter(sys.stdin)
         post = matter['frontmatter']
-        description = utils.vimwiki2phab(matter['content']).strip()
+        description = matter['content'].strip()
 
         t = model.Task(None)
         t.phid = utils.phid_lookup(task)
@@ -42,7 +42,7 @@ class Backend(object):
 
         post = None
         post = frontmatter.Post("")
-        post.content = utils.phab2vimwiki(t.description)
+        post.content = t.description
         if t.assigned:
             post['assigned'] = t.assigned.username
             post['author'] = t.author.username
