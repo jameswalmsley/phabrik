@@ -117,6 +117,7 @@ end
 
 local function navigate()
 	local word = vim.fn.expand('<cWORD>')
+	local line = vim.fn.getline('.')
 
 	local match = word:match("T%d+")
 	if(match) then
@@ -124,6 +125,16 @@ local function navigate()
 	end
 
 	local match = word:match("D%d+")
+	if(match) then
+		return get_diff(match)
+	end
+
+	local match = line:match("T%d+")
+	if(match) then
+		return open_task(match)
+	end
+
+	local match = line:match("D%d+")
 	if(match) then
 		return get_diff(match)
 	end
