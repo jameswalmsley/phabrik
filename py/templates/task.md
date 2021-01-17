@@ -14,7 +14,8 @@ Key: 🟣 - published        🟢 - accepted         🟠 - needs-review     �
 
 
 --------------------------------------------------------------------------------
-{% for rev in task.revisions %}
+
+{% for rev in task.revisions -%}
 {{rev.name}} - {{utils.get_diff_status_symbol(rev.status)}} - {{rev.title}}
 {% endfor %}
 --------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ Key: 🟣 - published        🟢 - accepted         🟠 - needs-review     �
 Comments:
 ================================================================================
 
-{% for c in task.comments|reverse %}
+{% for c in task.comments|reverse -%}
 {{utils.justify_strings(c.author.name + " ({})".format(c.author.username), "`{}`".format(c.created), 81)}}
 --------------------------------------------------------------------------------
 
