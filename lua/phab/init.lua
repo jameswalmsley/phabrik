@@ -42,12 +42,13 @@ local function set_md_buffer_options(buf)
 	vim.fn.setbufvar(buf, '&buftype', 'nofile')
 	vim.fn.setbufvar(buf, '&buflisted', 1)
 	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
+	vim.fn.execute(buf .. "bufdo set syntax=markdown")
 	vim.fn.execute(buf .. "bufdo setlocal nofoldenable")
 	vim.fn.execute(buf .. "bufdo setlocal conceallevel=0")
-	vim.fn.execute(buf .. "bufdo syntax match VimwikiLink \"[TD]\\d\\+\"")
-	vim.fn.execute(buf .. "bufdo syntax match VimwikiCode \"```\\_.*```\"")
+	vim.fn.execute(buf .. "bufdo syntax match mkdRule \"[TD]\\d\\+\"")
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
+
 local function get_diff(diffnum)
 
 	local buf = vim.fn.bufnr(diffnum, 1)
