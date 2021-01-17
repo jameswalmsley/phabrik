@@ -15,7 +15,7 @@ Key: 🟣 - published        🟢 - accepted         🟠 - needs-review     �
 
 --------------------------------------------------------------------------------
 {% for rev in task.revisions %}
-{{rev.name}} - {{utils.get_status_symbol(rev.status)}} - {{rev.title}}
+{{rev.name}} - {{utils.get_diff_status_symbol(rev.status)}} - {{rev.title}}
 {% endfor %}
 --------------------------------------------------------------------------------
 

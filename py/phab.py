@@ -49,11 +49,13 @@ def update(args):
     backend.update(args.task, args.source)
     backend.sync(args.task, args.source)
 
-@subcommand([argument('task', help="Task number e.g. T123"),
-             argument('source', help="Task source file")])
+@subcommand([argument('task', help="Task number e.g. T123")])
+def task(args):
+    backend.task(args.task)
 
-def sync(args):
-    backend.sync(args.task, args.source)
+@subcommand([])
+def dashboard(args):
+    backend.dashboard()
 
 @subcommand([argument('title')])
 def create(args):

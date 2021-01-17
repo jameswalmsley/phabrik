@@ -31,6 +31,10 @@ def get_tasks(phids):
         return result['data']
     return []
 
+def get_assigned_tasks(user_phid):
+    result = phab.maniphest.search(constraints={'assigned': [user_phid], 'statuses': ['open']}, attachments={'projects': True})
+    return result['data']
+
 def get_users(phids):
     result = phab.user.search(constraints={'phids':phids})
     return result['data']
@@ -39,9 +43,16 @@ def get_username(username):
     result = phab.user.search(constraints={'usernames':[username]})
     return result['data'][0]
 
+def whoami():
+    return phab.user.whoami()['phid']
+
 def get_revision(phid):
     result = phab.differential.revision.search(constraints={'phids':[phid]})
     return result['data'][0]
+
+def query_subscribed_revisions(userphid):
+    result = phab.differential.revision.search(constraints={'responsiblePHIDs': [userphid], 'statuses': ['open', 'accepted', 'needs-review', 'draft', 'changes-planned', 'needs-revision']})
+    return result['data']
 
 def approve_revision(phid):
         transactions=[]
@@ -105,7 +116,7 @@ def task_update(task, what):
 def domain():
     return phab.user.whoami()['primaryEmail'].split('@')[1]
 
-status_symbols = {
+diff_status_symbols = {
     'published': '🟣',
     'accepted':'🟢',
     'needs-review': '🟠',
@@ -115,10 +126,21 @@ status_symbols = {
     'abandoned': '🛫',
 }
 
-def get_status_symbol(status):
-    if(status in status_symbols):
-        return status_symbols[status]
+def get_diff_status_symbol(status):
+    if(status in diff_status_symbols):
+        return diff_status_symbols[status]
 
+    return " "
+
+priority_color_symbols = {
+    'red': '🔴',
+    'orange': '🟠',
+    'violet': '🟣',
+}
+
+def get_priority_color_symbols(color):
+    if(color in priority_color_symbols):
+        return priority_color_symbols[color]
     return " "
 
 def strike(text):

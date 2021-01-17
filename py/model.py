@@ -144,7 +144,7 @@ class Diff:
     @property
     def rawdiff(self):
         if not self.__rawdiff:
-            self.__rawdiff = utils.get_rawdiff(self.id).strip();
+            self.__rawdiff = utils.get_rawdiff(self.id);
         return self.__rawdiff
 
     @property
@@ -180,11 +180,11 @@ class Revision:
     __author = None
     diffPHID = None
     __transactions = None
+    comment = None
     created = None
 
-    def __init__(self, phid):
-        self.raw = utils.get_revision(phid)
-        r = self.raw
+    def __init__(self, r):
+        self.raw = r
         self.phid = r['phid']
         self.id = r['id']
         self.name = "D{}".format(self.id)
@@ -213,10 +213,23 @@ class Revision:
         return self.__author
 
     @staticmethod
+    def fromPHID(phid):
+        raw = utils.get_revision(phid)
+        return Revision(raw)
+
+    @staticmethod
     def fromPHIDs(phids):
         revs = []
         for phid in phids:
-            revs.append(Revision(phid))
+            revs.append(Revision.fromPHID(phid))
+        return revs
+
+    @staticmethod
+    def querySubscribed(userphid):
+        revs = []
+        raw = utils.query_subscribed_revisions(userphid)
+        for r in raw:
+            revs.append(Revision(r))
         return revs
 
     def __str__(self):
@@ -256,7 +269,7 @@ class Task(object):
             self.__dict__.update(r['fields'])
             self.description = r['fields']['description']['raw'].strip()
             if self.points:
-                self.points = int(self.points)
+                self.points = float(self.points)
             self.title = self.name
             phid_cache[self.phid] = self
 
@@ -279,6 +292,15 @@ class Task(object):
     def fromName(name):
         phid = utils.phid_lookup(name)
         return Task.fromPHID(phid)
+
+    @staticmethod
+    def queryAssigned(userphid):
+        raw = utils.get_assigned_tasks(userphid);
+        tasks = []
+        for r in raw:
+            tasks.append(Task(r))
+        return tasks
+
 
     @property
     def assigned(self):

@@ -1,5 +1,4 @@
 import os
-
 from frontmatter.default_handlers import YAMLHandler
 import utils
 import model
@@ -37,52 +36,46 @@ class Backend(object):
 
             t.commit()
 
-
-
-    def sync(self,task, file):
+    def task(self,task):
         t = model.Task.fromName(task)
 
         template = self.templateEnv.get_template("task.md")
 
         post = None
-        with open(file, 'r') as fp:
-            post = frontmatter.load(fp)
+        post = frontmatter.Post("")
+        post.content = utils.phab2vimwiki(t.description)
+        if t.assigned:
+            post['assigned'] = t.assigned.username
+            post['author'] = t.author.username
 
-        with open(file, 'w+') as fp:
-            post.content = utils.phab2vimwiki(t.description)
-            if t.assigned:
-                post['assigned'] = t.assigned.username
-                post['author'] = t.author.username
+        if t.points:
+            post['points'] = t.points
 
-            if t.points:
-                post['points'] = t.points
+        if t.projects:
+            tags = []
+            projects = []
+            for proj in t.projects:
+                if proj.slug:
+                    tags.append(proj.slug.replace("_-_", "-"))
+                else:
+                    projects.append(proj.name.replace("_-_", "-"))
+            post['tags'] = tags
+            post['projects'] = projects
 
-            if t.projects:
-                tags = []
-                projects = []
-                for proj in t.projects:
-                    if proj.slug:
-                        tags.append(proj.slug.replace("_-_", "-"))
-                    else:
-                        projects.append(proj.name.replace("_-_", "-"))
-                post['tags'] = tags
-                post['projects'] = projects
+        if t.title:
+            post['title'] = t.title
 
-            if t.title:
-                post['title'] = t.title
+        yh = YAMLHandler()
+        fm = yh.export(post.metadata)
 
-            yh = YAMLHandler()
-            fm = yh.export(post.metadata)
-
-            outputText = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
-            fp.write(outputText)
-
+        output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
+        print(output)
 
     def rawdiff(self, diff_name):
         phid = utils.phid_lookup(diff_name)
-        r = model.Revision(phid)
-
+        r = model.Revision.fromPHID(phid)
         template = self.templateEnv.get_template("rawdiff.diff")
+
         output = template.render(r=r, utils=utils)
         print(output)
         return 0
@@ -94,3 +87,26 @@ class Backend(object):
     def approve_revision(self, diff_name):
         phid = utils.phid_lookup(diff_name)
         utils.approve_revision(phid)
+
+    def dashboard(self):
+        tasks = model.Task.queryAssigned(utils.whoami())
+        revs = model.Revision.querySubscribed(utils.whoami())
+
+        rd = {}
+        for r in revs:
+            if r.status in rd:
+                rd[r.status].append(r)
+            else:
+                rd[r.status] = [r]
+
+        template = self.templateEnv.get_template("dashboard.md")
+
+        output = template.render(utils=utils, assigned=tasks, responsible=rd)
+        print(output)
+        return 0
+
+
+
+
+
+
