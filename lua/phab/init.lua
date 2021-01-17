@@ -75,7 +75,7 @@ local function dashboard()
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape("Phabrik")
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
-	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
+	vim.fn.setbufvar(buf, '&filetype', 'markdown')
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
@@ -93,7 +93,7 @@ local function open_task(tasknr)
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape(tasknr)
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
-	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
+	vim.fn.setbufvar(buf, '&filetype', 'markdown')
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
