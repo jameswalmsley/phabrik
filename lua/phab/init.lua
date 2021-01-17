@@ -25,12 +25,6 @@ local function phab_commandlist(command, args)
 	return vim.fn.systemlist("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. args)
 end
 
-local function update_task()
-	local tasknr = vim.fn.expand("%")
-	local command = ":w !python3 " .. get_path() .. "/py/phab.py task --update " .. tasknr
-	return vim.fn.execute(command)
-end
-
 local function sync_task()
 	phab_command("sync", get_task_id() .. " " .. get_file_path())
 end
@@ -101,6 +95,14 @@ local function open_task(tasknr)
 	vim.fn.execute(buf .. "buffer")
 	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
+end
+
+local function update_task()
+	local tasknr = vim.fn.expand("%")
+	local command = ":w !python3 " .. get_path() .. "/py/phab.py task --update " .. tasknr
+	vim.fn.execute(command)
+
+	open_task(tasknr)
 end
 
 local function navigate()
