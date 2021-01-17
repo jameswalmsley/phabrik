@@ -16,7 +16,7 @@
 ## Assigned Tasks
 
 {% for t in assigned -%}
-[[T{{t.id}}]] - {{t.title}}
+T{{t.id}} - {{t.title}}
 {% endfor %}
 
 ## Responsible Diffs
