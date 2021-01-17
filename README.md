@@ -27,10 +27,7 @@ Allows users to sync their phabricator tasks with vimwiki, and modify and update
 ## Install
 
 ```
-pip3 install phabricator
-pip3 install python-frontmatter
-
-Plug 'jameswalmsley/phabrik'
+Plug 'jameswalmsley/phabrik', {'do': ':lua phab.install()'}
 ```
 
 ## Features

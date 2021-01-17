@@ -17,24 +17,24 @@ local function get_task_id()
 	return name
 end
 
+local function get_python()
+	local command = "PYTHONPATH=" .. get_path() .. "/py/packages python3 "
+	return command
+end
+
+local function get_command()
+	local command = get_python() .. get_path() .. "/py/phab.py "
+	return command
+end
+
 local function phab_command(command, args)
-	return vim.fn.system("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. args)
+	return vim.fn.system(get_command() .. command .. " " .. args)
 end
 
 local function phab_commandlist(command, args)
-	return vim.fn.systemlist("python3 " .. get_path() .. "/py/phab.py " .. command .. " " .. args)
+	return vim.fn.systemlist(get_command() .. command .. " " .. args)
 end
 
-local function sync_task()
-	phab_command("sync", get_task_id() .. " " .. get_file_path())
-end
-
-local function create_task()
-	local title = vim.fn.input("Task Title > ")
-	local output = phab_command("create", "Txxx " .. string.format("\"%s\"", title))
-	local path = string.format("%s/%s", get_file_folder(), output)
-	vim.api.nvim_command("edit " .. path)
-end
 
 local api = vim.api
 
@@ -99,9 +99,15 @@ end
 
 local function update_task()
 	local tasknr = vim.fn.expand("%")
-	local command = ":w !python3 " .. get_path() .. "/py/phab.py task --update " .. tasknr
+	local command = ":w !" .. get_command() .. "task --update " .. tasknr
 	vim.fn.execute(command)
 
+	open_task(tasknr)
+end
+
+local function create_task()
+	local title = vim.fn.input("Task Title > ")
+	local tasknr = phab_command("create", "Txxx " .. string.format("\"%s\"", title))
 	open_task(tasknr)
 end
 
@@ -151,6 +157,10 @@ local function diff_close_comment()
 	vim.fn.execute("bdelete")
 end
 
+local function install()
+	return vim.fn.system(get_python() .. "-m pip install --target " .. get_path() .. "/py/packages python-frontmatter unidiff phabricator")
+end
+
 return {
 	get_path = get_path,
 	update_task = update_task,
@@ -164,5 +174,6 @@ return {
 	diff_close_comment = diff_close_comment,
 	navigate = navigate,
 	dashboard = dashboard,
+	install = install,
 }
 
