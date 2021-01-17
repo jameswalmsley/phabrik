@@ -49,8 +49,12 @@ def update(args):
     backend.update(args.task, args.source)
     backend.sync(args.task, args.source)
 
-@subcommand([argument('task', help="Task number e.g. T123")])
+@subcommand([argument('task', help="Task number e.g. T123"),
+             argument('--update', help="Parse stdin and update task", action='store_true')])
 def task(args):
+    if(args.update):
+        return backend.task_update(args.task)
+
     backend.task(args.task)
 
 @subcommand([])

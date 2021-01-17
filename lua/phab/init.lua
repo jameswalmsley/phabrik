@@ -26,8 +26,9 @@ local function phab_commandlist(command, args)
 end
 
 local function update_task()
-	vim.api.nvim_command("write")
-	phab_command("update", get_task_id() .. " " .. get_file_path())
+	local tasknr = vim.fn.expand("%")
+	local command = ":w !python3 " .. get_path() .. "/py/phab.py task --update " .. tasknr
+	return vim.fn.execute(command)
 end
 
 local function sync_task()

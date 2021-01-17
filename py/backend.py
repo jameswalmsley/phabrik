@@ -1,4 +1,4 @@
-import os
+import sys
 from frontmatter.default_handlers import YAMLHandler
 import utils
 import model
@@ -12,29 +12,28 @@ class Backend(object):
         self.templateLoader = jinja2.FileSystemLoader(searchpath=spath+"/templates")
         self.templateEnv = jinja2.Environment(loader=self.templateLoader)
 
-    def update(self, task, file):
+    def task_update(self, task):
         description=""
 
-        with open(file, 'r') as fp:
-            matter = utils.parse_matter(fp)
-            post = matter['frontmatter']
-            description = utils.vimwiki2phab(matter['content']).strip()
+        matter = utils.parse_matter(sys.stdin)
+        post = matter['frontmatter']
+        description = utils.vimwiki2phab(matter['content']).strip()
 
-            t = model.Task(None)
-            t.phid = utils.phid_lookup(task)
-            t.description = description
+        t = model.Task(None)
+        t.phid = utils.phid_lookup(task)
+        t.description = description
 
-            if('title' in post):
-                    t.title = post['title']
-            if('points' in post):
-                    t.points = post['points']
-            if('assigned' in post):
-                    t.assigned = post['assigned']
+        if('title' in post):
+                t.title = post['title']
+        if('points' in post):
+                t.points = post['points']
+        if('assigned' in post):
+                t.assigned = post['assigned']
 
-            if len(matter['comment']):
-                    t.comment = matter['comment']
+        if len(matter['comment']):
+                t.comment = matter['comment']
 
-            t.commit()
+        t.commit()
 
     def task(self,task):
         t = model.Task.fromName(task)
