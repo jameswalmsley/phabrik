@@ -38,6 +38,16 @@ end
 
 local api = vim.api
 
+local function set_md_buffer_options(buf)
+	vim.fn.setbufvar(buf, '&buftype', 'nofile')
+	vim.fn.setbufvar(buf, '&buflisted', 1)
+	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
+	vim.fn.execute(buf .. "bufdo setlocal nofoldenable")
+	vim.fn.execute(buf .. "bufdo setlocal conceallevel=0")
+	vim.fn.execute(buf .. "bufdo syntax match VimwikiLink \"[TD]\\d\\+\"")
+	vim.fn.execute(buf .. "bufdo syntax match VimwikiCode \"```\\_.*```\"")
+	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
+end
 local function get_diff(diffnum)
 
 	local buf = vim.fn.bufnr(diffnum, 1)
@@ -46,7 +56,6 @@ local function get_diff(diffnum)
 	vim.fn.setbufvar(buf, '&buftype', 'nofile')
 	vim.fn.setbufvar(buf, '&buflisted', 1)
 	vim.fn.setbufvar(buf, 'diffnum', diffnum)
-
 
 	local diff = phab_commandlist("diff", diffnum)
 	api.nvim_buf_set_lines(buf, 0, -1, false, diff)
@@ -64,8 +73,7 @@ end
 local function dashboard()
 	local buf = vim.fn.bufnr("Phabrik", 1)
 
-	vim.fn.setbufvar(buf, '&buftype', 'nofile')
-	vim.fn.setbufvar(buf, '&buflisted', 1)
+	set_md_buffer_options(buf)
 
 	local output = phab_commandlist("dashboard", "")
 	api.nvim_buf_set_lines(buf, 0, -1, false, output)
@@ -75,15 +83,13 @@ local function dashboard()
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape("Phabrik")
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
-	vim.fn.setbufvar(buf, '&filetype', 'markdown')
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
 local function open_task(tasknr)
 	local buf = vim.fn.bufnr(tasknr, 1)
 
-	vim.fn.setbufvar(buf, '&buftype', 'nofile')
-	vim.fn.setbufvar(buf, '&buflisted', 1)
+	set_md_buffer_options(buf)
 
 	local output = phab_commandlist("task", tasknr)
 	api.nvim_buf_set_lines(buf, 0, -1, false, output)
@@ -93,8 +99,6 @@ local function open_task(tasknr)
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape(tasknr)
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
-	vim.fn.setbufvar(buf, '&filetype', 'markdown')
-	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
 local function update_task()
@@ -147,7 +151,7 @@ local function diff_start_comment()
 	vim.fn.setbufvar(buf, '&buftype', 'nofile')
 	vim.fn.setbufvar(buf, '&buflisted', 1)
 	vim.fn.setbufvar(buf, 'diffnum', diffnum)
-	vim.fn.setbufvar(buf, '&filetype', 'markdown')
+	vim.fn.setbufvar(buf, '&filetype', 'vimwiki')
 
 	vim.fn.execute(buf .. "buffer")
 	vim.fn.execute("autocmd BufLeave <buffer> lua phab.diff_close_comment()")

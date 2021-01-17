@@ -55,9 +55,9 @@ class Backend(object):
             projects = []
             for proj in t.projects:
                 if proj.slug:
-                    tags.append(proj.slug.replace("_-_", "-"))
+                    tags.append(proj.slug)
                 else:
-                    projects.append(proj.name.replace("_-_", "-"))
+                    projects.append(proj.name)
             post['tags'] = tags
             post['projects'] = projects
 
