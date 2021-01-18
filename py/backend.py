@@ -81,7 +81,7 @@ class Backend(object):
 
     def create(self, title):
         tid = utils.task_create(title)
-        print('T'+tid['id']+'.md')
+        print("T{}".format(tid['id'].strip()))
 
     def approve_revision(self, diff_name):
         phid = utils.phid_lookup(diff_name)
