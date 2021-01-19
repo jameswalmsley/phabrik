@@ -48,3 +48,10 @@ Changes Planned
 {% include 'item-revision.md' -%}
 {% endfor %}
 
+
+Projects
+--------------------------------------------------------------------------------
+
+{% for p in projects -%}
+P{{p.id}} - {{p.name}}
+{% endfor %}

@@ -82,6 +82,14 @@ def patch(args):
     phabdiff = "python3 {} diff {}".format(str(spath) + "/phab.py", args.diff)
     os.system("{} | git am --keep-non-patch -3".format(phabdiff))
 
+@subcommand()
+def projects(args):
+    backend.projects()
+
+@subcommand([argument('phid')])
+def project(args):
+    backend.project(args.phid)
+
 if __name__ == '__main__':
     sys.exit(main())
 

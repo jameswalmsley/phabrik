@@ -87,38 +87,6 @@ class Transaction:
             transactions.append(Transaction(t))
         return transactions
 
-class Project:
-    phid = None
-    raw = None
-    slug = None
-    name = None
-
-    def __init__(self, phid):
-        self.raw = utils.get_project(phid)
-        r = self.raw
-        self.phid = r['phid']
-        self.slug = r['fields']['slug']
-        self.name = r['fields']['name']
-        phid_cache[self.phid] = self
-
-    def __str__(self):
-        return self.slug
-
-    def __repr__(self):
-        if self.slug:
-            return self.slug
-        else:
-            return self.name
-
-    @staticmethod
-    def fromPHIDs(phids):
-        projects = []
-        for phid in phids:
-            if phid in phid_cache:
-                projects.append(phid_cache[phid])
-            else:
-                projects.append(Project(phid))
-        return projects
 
 class Diff:
     raw = None
@@ -244,6 +212,8 @@ class Task(object):
     phid = None
     points = None
     title = None
+    priority = None
+    __columns = None
 
     __project_phids = None
     __projects = None
@@ -271,7 +241,17 @@ class Task(object):
             if self.points:
                 self.points = float(self.points)
             self.title = self.name
+            self.__columns = {}
+            if 'columns' in r['attachments']:
+                for i, (k,v) in enumerate(r['attachments']['columns']['boards'].items()):
+                    self.__columns[k] = v
+
             phid_cache[self.phid] = self
+
+    def getColumn(self, projphid):
+        if projphid in self.__columns:
+            return self.__columns[projphid]
+        return None
 
     @staticmethod
     def fromPHIDs(phids):
@@ -301,6 +281,13 @@ class Task(object):
             tasks.append(Task(r))
         return tasks
 
+    @staticmethod
+    def queryProjectTasks(phid):
+        raws = utils.get_project_tasks(phid)
+        tasks = []
+        for r in raws:
+            tasks.append(Task(r))
+        return tasks
 
     @property
     def assigned(self):
@@ -372,3 +359,116 @@ class Task(object):
 
         utils.task_update(self, what)
 
+class Column:
+    phid = None
+    raw = None
+    name = None
+    id = None
+    tasks = None
+    def __init__(self, r):
+        self.tasks = []
+        self.raw = r
+        self.phid = r['phid']
+        self.id = r['id']
+        self.__dict__.update(r['fields'])
+        phid_cache[self.phid] = self
+
+    @staticmethod
+    def queryProject(phid):
+        cols = []
+        raws = utils.get_project_columns(phid)
+        for r in raws:
+            cols.append(Column(r))
+
+        return cols
+
+class Project:
+    phid = None
+    raw = None
+    name = None
+    id = None
+    color = None
+    created = None
+    modified = None
+    depth = None
+    description = None
+    icon = None
+    milestone = None
+    parent = None
+    slug = None
+    subtype = None
+
+    __columns = None
+    __coldict = None
+    __tasks = None
+
+    def __init__(self, r):
+        self.raw = r
+        self.phid = r['phid']
+        self.id = r['id']
+        self.__dict__.update(r['fields'])
+        phid_cache[self.phid] = self
+
+    @property
+    def columns(self):
+        if not self.__columns:
+            self.__columns = Column.queryProject(self.phid)
+            self.__coldict = {}
+            for c in self.__columns:
+                self.__coldict[c.phid] = c
+
+            for t in self.tasks:
+                col = t.getColumn(self.phid)
+                if col:
+                    colphid = col['columns'][0]['phid']
+                    self.__coldict[colphid].tasks.append(t)
+        return self.__columns
+
+    @property
+    def tasks(self):
+        if not self.__tasks:
+            self.__tasks = Task.queryProjectTasks(self.phid)
+
+        return self.__tasks
+
+    @staticmethod
+    def fromMany(raws):
+        projs = []
+        for r in raws:
+            if r['phid'] in phid_cache:
+                projs.append(phid_cache[r['phid']])
+            else:
+                projs.append(Project(r))
+
+        return projs
+
+    @staticmethod
+    def queryUserProjects(phid):
+        return Project.fromMany(utils.get_user_projects(phid))
+
+    def __str__(self):
+        return self.slug
+
+    def __repr__(self):
+        if self.slug:
+            return self.slug
+        else:
+            return self.name
+
+    @staticmethod
+    def fromPHID(phid):
+        if phid in phid_cache:
+            return phid_cache[phid]
+        else:
+            return Project(utils.get_project(phid))
+
+    @staticmethod
+    def fromPHIDs(phids):
+        projects = []
+        for phid in phids:
+            projects.append(Project.fromPHID(phid))
+        return projects
+
+    @staticmethod
+    def fromID(id):
+        return Project(utils.get_project_id(id))

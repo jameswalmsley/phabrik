@@ -45,7 +45,7 @@ local function set_md_buffer_options(buf)
 	vim.fn.execute(buf .. "bufdo set syntax=markdown")
 	vim.fn.execute(buf .. "bufdo setlocal nofoldenable")
 	vim.fn.execute(buf .. "bufdo setlocal conceallevel=0")
-	vim.fn.execute(buf .. "bufdo syntax match mkdRule \"[TD]\\d\\+\"")
+	vim.fn.execute(buf .. "bufdo syntax match mkdRule \"\\s*[PTD]\\d\\+\\s*\"")
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
@@ -85,6 +85,21 @@ local function dashboard()
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
+end
+
+local function open_project(pnr)
+	local buf = vim.fn.bufnr(pnr, 1)
+
+	set_md_buffer_options(buf)
+
+	local output = phab_commandlist("project", pnr)
+	api.nvim_buf_set_lines(buf, 0, -1, false, output)
+
+	vim.fn.setbufvar(buf, '&modifiable', 1)
+
+	local command = buf .. "bufdo file " .. vim.fn.fnameescape(pnr)
+	vim.fn.execute(command)
+	vim.fn.execute(buf .. "buffer")
 end
 
 local function open_task(tasknr)
@@ -128,6 +143,11 @@ local function navigate()
 	local match = word:match("D%d+")
 	if(match) then
 		return get_diff(match)
+	end
+
+	local match = word:match("P%d+")
+	if(match) then
+		return open_project(match)
 	end
 
 	local match = line:match("T%d+")
@@ -182,9 +202,9 @@ end
 return {
 	get_path = get_path,
 	update_task = update_task,
-	sync_task = sync_task,
 	create_task = create_task,
 	open_task = open_task,
+	open_project = open_project,
 	get_diff = get_diff,
 	approve_diff = approve_diff,
 	apply_patch = apply_patch,

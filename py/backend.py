@@ -88,8 +88,10 @@ class Backend(object):
         utils.approve_revision(phid)
 
     def dashboard(self):
-        tasks = model.Task.queryAssigned(utils.whoami())
-        revs = model.Revision.querySubscribed(utils.whoami())
+        whoami = utils.whoami()
+        tasks = model.Task.queryAssigned(whoami)
+        revs = model.Revision.querySubscribed(whoami)
+        projects = model.Project.queryUserProjects(whoami)
 
         rd = {}
         for r in revs:
@@ -100,12 +102,21 @@ class Backend(object):
 
         template = self.templateEnv.get_template("dashboard.md")
 
-        output = template.render(utils=utils, assigned=tasks, responsible=rd)
+        output = template.render(utils=utils, assigned=tasks, responsible=rd, projects=projects)
         print(output)
         return 0
 
+    def projects(self):
+        phid = utils.whoami()
+        projs = model.Project.queryUserProjects(phid)
+        for p in projs:
+                print("{} - {}".format(p.name, p.phid))
 
+    def project(self, id):
+        proj = model.Project.fromID(int(id[1:]))
+        template = self.templateEnv.get_template("workboard.md")
 
-
+        output = template.render(utils=utils, project=proj)
+        print(output)
 
 

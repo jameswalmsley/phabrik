@@ -43,6 +43,18 @@ def get_username(username):
     result = phab.user.search(constraints={'usernames':[username]})
     return result['data'][0]
 
+def get_user_projects(userphid):
+    result = phab.project.search(constraints={'members':[userphid]}, queryKey='active')
+    return result['data']
+
+def get_project_tasks(phid):
+    result = phab.maniphest.search(constraints={'projects':[phid], 'statuses':['open']}, attachments={'columns': True})
+    return result['data']
+
+def get_project_columns(phid):
+    result = phab.project.column.search(constraints={'projects': [phid]})
+    return result['data']
+
 def whoami():
     return phab.user.whoami()['phid']
 
@@ -94,6 +106,10 @@ def get_project(phid):
     result = phab.project.search(constraints={'phids': [phid]})
     return result['data'][0]
 
+def get_project_id(id):
+    result = phab.project.search(constraints={'ids': [id]})
+    return result['data'][0]
+
 def transaction(type, value):
         return {'type': type, 'value': value}
 
@@ -133,14 +149,28 @@ def get_diff_status_symbol(status):
     return " "
 
 priority_color_symbols = {
+    'pink': ' ',
+    'violet': '🟣',
     'red': '🔴',
     'orange': '🟠',
-    'violet': '🟣',
+    'yellow': ' ',
+    'sky': ' ',
 }
 
-def get_priority_color_symbols(color):
-    if(color in priority_color_symbols):
-        return priority_color_symbols[color]
+priority2color = {
+    'Unbreak Now': 'pink',
+    'Needs Triage': 'violet',
+    'High': 'red',
+    'Normal': 'orange',
+    'Low': 'yellow',
+    'Wishlist': 'sky'
+}
+
+def get_priority_symbol(priority):
+    if priority in priority2color:
+        color = priority2color[priority]
+        if(color in priority_color_symbols):
+            return priority_color_symbols[color]
     return " "
 
 def strike(text):
@@ -187,3 +217,4 @@ def parse_matter(fp):
                 'backmatter': backmatter,
                 'comment': comment
         }
+
