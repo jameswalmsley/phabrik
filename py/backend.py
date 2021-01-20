@@ -83,10 +83,6 @@ class Backend(object):
         tid = utils.task_create(title)
         print("T{}".format(tid['id'].strip()))
 
-    def approve_revision(self, diff_name):
-        phid = utils.phid_lookup(diff_name)
-        utils.diff_action(phid, 'accept')
-
     def dashboard(self):
         whoami = utils.whoami()
         tasks = model.Task.queryAssigned(whoami)
@@ -106,17 +102,45 @@ class Backend(object):
         print(output)
         return 0
 
-    def diff_abandon(self, diff_name):
+    def diff_plan_changes(self, diff_name):
         phid = utils.phid_lookup(diff_name)
-        utils.diff_action(diff_name, 'abandon')
+        utils.diff_action(phid, 'plan-changes')
 
     def diff_request_review(self, diff_name):
         phid = utils.phid_lookup(diff_name)
         utils.diff_action(phid, 'request-review')
 
+    def diff_close(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'close')
+
+    def diff_reopen(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'reopen')
+
+    def diff_abandon(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'abandon')
+
+    def diff_accept(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'accept')
+
+    def diff_reclaim(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'reclaim')
+
     def diff_request_changes(self, diff_name):
         phid = utils.phid_lookup(diff_name)
         utils.diff_action(phid, 'reject')
+
+    def diff_commandeer(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'commandeer')
+
+    def diff_resign(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'resign')
 
     def projects(self):
         phid = utils.whoami()

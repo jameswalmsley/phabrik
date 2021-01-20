@@ -165,14 +165,9 @@ local function navigate()
 
 end
 
-local function approve_diff()
+local function diff_plan_changes()
 	local diffname = api.nvim_buf_get_var(0, 'diffnum')
-	phab_command("diff", "--approve " .. diffname)
-end
-
-local function diff_abandon()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
-	phab_command("diff", "--abandon " .. diffname)
+	phab_command("diff", "--plan-changes" .. diffname)
 end
 
 local function diff_request_review()
@@ -180,9 +175,44 @@ local function diff_request_review()
 	phab_command("diff", "--request-review " .. diffname)
 end
 
+local function diff_close()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--close " .. diffname)
+end
+
+local function diff_reopen()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--reopen " .. diffname)
+end
+
+local function diff_abandon()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--abandon " .. diffname)
+end
+
+local function diff_approve()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--approve " .. diffname)
+end
+
+local function diff_reclaim()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--reclaim " .. diffname)
+end
+
 local function diff_request_changes()
 	local diffname = api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--request-changes " .. diffname)
+end
+
+local function diff_commandeer()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--commandeer " .. diffname)
+end
+
+local function diff_resign()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--resign " .. diffname)
 end
 
 local function apply_patch()
@@ -222,10 +252,16 @@ return {
 	open_task = open_task,
 	open_project = open_project,
 	get_diff = get_diff,
-	approve_diff = approve_diff,
-	diff_abandon = diff_abandon,
+	diff_plan_changes = diff_plan_changes,
 	diff_request_review = diff_request_review,
+	diff_close = diff_close,
+	diff_reopen = diff_reopen,
+	diff_abandon = diff_abandon,
+	diff_approve = diff_approve,
+	diff_reclaim = diff_reclaim,
 	diff_request_changes = diff_request_changes,
+	diff_commandeer = diff_commandeer,
+	diff_resign = diff_resign,
 	apply_patch = apply_patch,
 	diff_start_comment = diff_start_comment,
 	diff_close_comment = diff_close_comment,

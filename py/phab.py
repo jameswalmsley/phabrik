@@ -66,26 +66,40 @@ def create(args):
     backend.create(args.title)
 
 @subcommand([argument('diff'),
-             argument('--approve', action="store_true"),
-             argument('--abandon', action="store_true"),
+             argument('--plan-changes', action="store_true"),
              argument('--request-review', action="store_true"),
+             argument('--close', action="store_true"),
+             argument('--reopen', action="store_true"),
+             argument('--abandon', action="store_true"),
+             argument('--approve', action="store_true"),
+             argument('--reclaim', action="store_true"),
              argument('--request-changes', action="store_true"),
+             argument('--commandeer', action="store_true"),
+             argument('--resign', action="store_true"),
 ])
 def diff(args):
-    if(args.approve):
-        return backend.approve_revision(args.diff)
-    if(args.abandon):
-        return backend.diff_abandon(args.diff)
+    if(args.plan_changes):
+        return backend.diff_plan_changes(args.diff)
     if(args.request_review):
         return backend.diff_request_review(args.diff)
+    if(args.close):
+        return backend.diff_close(args.diff)
+    if(args.reopen):
+        return backend.diff_reopen(args.diff)
+    if(args.abandon):
+        return backend.diff_abandon(args.diff)
+    if(args.approve):
+        return backend.diff_accept(args.diff)
+    if(args.reclaim):
+        return backend.diff_reclaim(args.diff)
     if(args.request_changes):
         return backend.diff_request_changes(args.diff)
+    if(args.commandeer):
+        return backend.diff_commandeer(args.diff)
+    if(args.resign):
+        return backend.diff_resign(args.diff)
 
     return backend.rawdiff(args.diff)
-
-@subcommand([argument('diff')])
-def approve(args):
-    backend.approve(args.diff)
 
 @subcommand([argument('diff')])
 def patch(args):
