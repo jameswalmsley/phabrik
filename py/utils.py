@@ -66,12 +66,6 @@ def query_subscribed_revisions(userphid):
     result = phab.differential.revision.search(constraints={'responsiblePHIDs': [userphid], 'statuses': ['open', 'accepted', 'needs-review', 'draft', 'changes-planned', 'needs-revision']})
     return result['data']
 
-def approve_revision(phid):
-        transactions=[]
-        transactions.append({'type': 'accept', 'value': True})
-        result = phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
-        pprint(result)
-
 def get_diff(phid):
     result = phab.differential.diff.search(constraints={'phids':[phid]})
     return result['data'][0]
@@ -83,6 +77,12 @@ def get_rawdiff(id):
 def get_commitmessage(revision_id):
     result = phab.differential.getcommitmessage(revision_id=revision_id)
     return result[:]
+
+def diff_action(phid, action):
+    transactions = []
+    transactions.append({'type': action, 'value': True})
+    result = phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
+    pprint(result)
 
 def task_get_revision_phids(phid):
     phids = []

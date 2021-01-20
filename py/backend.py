@@ -85,7 +85,7 @@ class Backend(object):
 
     def approve_revision(self, diff_name):
         phid = utils.phid_lookup(diff_name)
-        utils.approve_revision(phid)
+        utils.diff_action(phid, 'accept')
 
     def dashboard(self):
         whoami = utils.whoami()
@@ -105,6 +105,14 @@ class Backend(object):
         output = template.render(utils=utils, assigned=tasks, responsible=rd, projects=projects)
         print(output)
         return 0
+
+    def diff_abandon(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(diff_name, 'abandon')
+
+    def diff_request_review(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'request-review')
 
     def projects(self):
         phid = utils.whoami()
