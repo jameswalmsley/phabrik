@@ -180,6 +180,11 @@ local function diff_request_review()
 	phab_command("diff", "--request-review " .. diffname)
 end
 
+local function diff_request_changes()
+	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	phab_command("diff", "--request-changes " .. diffname)
+end
+
 local function apply_patch()
 	local diffname = api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("patch", diffname)
@@ -220,6 +225,7 @@ return {
 	approve_diff = approve_diff,
 	diff_abandon = diff_abandon,
 	diff_request_review = diff_request_review,
+	diff_request_changes = diff_request_changes,
 	apply_patch = apply_patch,
 	diff_start_comment = diff_start_comment,
 	diff_close_comment = diff_close_comment,

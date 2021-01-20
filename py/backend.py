@@ -114,6 +114,10 @@ class Backend(object):
         phid = utils.phid_lookup(diff_name)
         utils.diff_action(phid, 'request-review')
 
+    def diff_request_changes(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        utils.diff_action(phid, 'reject')
+
     def projects(self):
         phid = utils.whoami()
         projs = model.Project.queryUserProjects(phid)

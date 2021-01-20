@@ -68,7 +68,9 @@ def create(args):
 @subcommand([argument('diff'),
              argument('--approve', action="store_true"),
              argument('--abandon', action="store_true"),
-             argument('--request-review', action="store_true")])
+             argument('--request-review', action="store_true"),
+             argument('--request-changes', action="store_true"),
+])
 def diff(args):
     if(args.approve):
         return backend.approve_revision(args.diff)
@@ -76,6 +78,8 @@ def diff(args):
         return backend.diff_abandon(args.diff)
     if(args.request_review):
         return backend.diff_request_review(args.diff)
+    if(args.request_changes):
+        return backend.diff_request_changes(args.diff)
 
     return backend.rawdiff(args.diff)
 
