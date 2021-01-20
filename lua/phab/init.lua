@@ -71,15 +71,25 @@ local function get_diff(diffnum)
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
-local function dashboard()
-	local buf = vim.fn.bufnr("Phabrik", 1)
-
-	set_md_buffer_options(buf)
+local function dashboard_update(buf)
+	vim.fn.setbufvar(buf, '&modifiable', 1)
 
 	local output = phab_commandlist("dashboard", "")
 	api.nvim_buf_set_lines(buf, 0, -1, false, output)
 
 	vim.fn.setbufvar(buf, '&modifiable', 0)
+end
+
+local function dashboard_refresh()
+	dashboard_update(vim.fn.bufnr("%"))
+end
+
+local function dashboard()
+	local buf = vim.fn.bufnr("Phabrik", 1)
+
+	set_md_buffer_options(buf)
+
+	dashboard_update(buf)
 
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape("Phabrik")
 	vim.fn.execute(command)
@@ -267,6 +277,7 @@ return {
 	diff_close_comment = diff_close_comment,
 	navigate = navigate,
 	dashboard = dashboard,
+	dashboard_refresh = dashboard_refresh,
 	install = install,
 }
 
