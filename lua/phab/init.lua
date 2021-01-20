@@ -128,6 +128,7 @@ end
 local function create_task()
 	local title = vim.fn.input("Task Title > ")
 	local tasknr = phab_command("create", string.format("\"%s\"", title))
+	tasknr = tasknr:gsub("%s+", "")
 	open_task(tasknr)
 end
 
