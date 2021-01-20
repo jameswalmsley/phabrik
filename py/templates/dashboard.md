@@ -20,7 +20,7 @@ Assigned Tasks
 T{{t.id}} - {{t.title}}
 {% endfor %}
 
-Responsible Diffs
+DIFFs to Review
 --------------------------------------------------------------------------------
 
 {% for r in responsible['needs-review'] -%}
