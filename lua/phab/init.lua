@@ -36,8 +36,6 @@ local function phab_commandlist(command, args)
 end
 
 
-local api = vim.api
-
 local function set_md_buffer_options(buf)
 	vim.fn.setbufvar(buf, '&buftype', 'nofile')
 	vim.fn.setbufvar(buf, '&buflisted', 1)
@@ -49,7 +47,7 @@ local function set_md_buffer_options(buf)
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
-local function get_diff(diffnum)
+local function diff_get(diffnum)
 
 	local buf = vim.fn.bufnr(diffnum, 1)
 
@@ -59,7 +57,7 @@ local function get_diff(diffnum)
 	vim.fn.setbufvar(buf, 'diffnum', diffnum)
 
 	local diff = phab_commandlist("diff", diffnum)
-	api.nvim_buf_set_lines(buf, 0, -1, false, diff)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, diff)
 
 	vim.fn.setbufvar(buf, '&filetype', 'diff')
 	vim.fn.setbufvar(buf, '&modifiable', 0)
@@ -75,7 +73,7 @@ local function dashboard_update(buf)
 	vim.fn.setbufvar(buf, '&modifiable', 1)
 
 	local output = phab_commandlist("dashboard", "")
-	api.nvim_buf_set_lines(buf, 0, -1, false, output)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
 
 	vim.fn.setbufvar(buf, '&modifiable', 0)
 end
@@ -97,13 +95,13 @@ local function dashboard()
 	vim.fn.execute("nnoremap <buffer> <Enter> :lua phab.navigate()<CR>")
 end
 
-local function open_project(pnr)
+local function project_open(pnr)
 	local buf = vim.fn.bufnr(pnr, 1)
 
 	set_md_buffer_options(buf)
 
 	local output = phab_commandlist("project", pnr)
-	api.nvim_buf_set_lines(buf, 0, -1, false, output)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
 
 	vim.fn.setbufvar(buf, '&modifiable', 1)
 
@@ -112,34 +110,40 @@ local function open_project(pnr)
 	vim.fn.execute(buf .. "buffer")
 end
 
-local function open_task(tasknr)
+local function task_buf_update(buf, tasknr)
+	local output = phab_commandlist("task", tasknr)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
+end
+
+local function task_open(tasknr)
 	local buf = vim.fn.bufnr(tasknr, 1)
 
 	set_md_buffer_options(buf)
 
-	local output = phab_commandlist("task", tasknr)
-	api.nvim_buf_set_lines(buf, 0, -1, false, output)
-
 	vim.fn.setbufvar(buf, '&modifiable', 1)
+	task_buf_update(buf, tasknr)
 
 	local command = buf .. "bufdo file " .. vim.fn.fnameescape(tasknr)
 	vim.fn.execute(command)
 	vim.fn.execute(buf .. "buffer")
 end
 
-local function update_task()
+local function task_update()
 	local tasknr = vim.fn.expand("%")
+	local pos = vim.fn.getcurpos()
 	local command = ":w !" .. get_command() .. "task --update " .. tasknr
 	vim.fn.execute(command)
 
-	open_task(tasknr)
+	task_buf_update(vim.fn.bufnr("%"), tasknr)
+
+	vim.fn.setpos('.', pos)
 end
 
-local function create_task()
+local function task_create()
 	local title = vim.fn.input("Task Title > ")
 	local tasknr = phab_command("create", string.format("\"%s\"", title))
 	tasknr = tasknr:gsub("%s+", "")
-	open_task(tasknr)
+	task_open(tasknr)
 end
 
 local function navigate()
@@ -148,27 +152,27 @@ local function navigate()
 
 	local match = word:match("T%d+")
 	if(match) then
-		return open_task(match)
+		return task_open(match)
 	end
 
 	local match = word:match("D%d+")
 	if(match) then
-		return get_diff(match)
+		return diff_get(match)
 	end
 
 	local match = word:match("P%d+")
 	if(match) then
-		return open_project(match)
+		return project_open(match)
 	end
 
 	local match = line:match("T%d+")
 	if(match) then
-		return open_task(match)
+		return task_open(match)
 	end
 
 	local match = line:match("D%d+")
 	if(match) then
-		return get_diff(match)
+		return diff_get(match)
 	end
 
 	print("Not a valid Phabrik link: ", word)
@@ -176,62 +180,62 @@ local function navigate()
 end
 
 local function diff_plan_changes()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--plan-changes" .. diffname)
 end
 
 local function diff_request_review()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--request-review " .. diffname)
 end
 
 local function diff_close()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--close " .. diffname)
 end
 
 local function diff_reopen()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--reopen " .. diffname)
 end
 
 local function diff_abandon()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--abandon " .. diffname)
 end
 
 local function diff_approve()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--approve " .. diffname)
 end
 
 local function diff_reclaim()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--reclaim " .. diffname)
 end
 
 local function diff_request_changes()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--request-changes " .. diffname)
 end
 
 local function diff_commandeer()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--commandeer " .. diffname)
 end
 
 local function diff_resign()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("diff", "--resign " .. diffname)
 end
 
-local function apply_patch()
-	local diffname = api.nvim_buf_get_var(0, 'diffnum')
+local function diff_patch()
+	local diffname = vim.api.nvim_buf_get_var(0, 'diffnum')
 	phab_command("patch", diffname)
 end
 
 local function diff_start_comment()
-	local diffnum = api.nvim_buf_get_var(0, 'diffnum')
+	local diffnum = vim.api.nvim_buf_get_var(0, 'diffnum')
 	vim.fn.execute("below split")
 	local buf = vim.fn.bufnr(diffnum .. " - Comment", 1)
 
@@ -257,11 +261,11 @@ end
 
 return {
 	get_path = get_path,
-	update_task = update_task,
-	create_task = create_task,
-	open_task = open_task,
-	open_project = open_project,
-	get_diff = get_diff,
+	task_update = task_update,
+	task_create = task_create,
+	task_open = task_open,
+	project_open = project_open,
+	diff_get = diff_get,
 	diff_plan_changes = diff_plan_changes,
 	diff_request_review = diff_request_review,
 	diff_close = diff_close,
@@ -272,9 +276,9 @@ return {
 	diff_request_changes = diff_request_changes,
 	diff_commandeer = diff_commandeer,
 	diff_resign = diff_resign,
-	apply_patch = apply_patch,
 	diff_start_comment = diff_start_comment,
 	diff_close_comment = diff_close_comment,
+	diff_patch = diff_patch,
 	navigate = navigate,
 	dashboard = dashboard,
 	dashboard_refresh = dashboard_refresh,
