@@ -224,6 +224,8 @@ function! phabrik#navigate()
     endif
   endif
 
+  let match = trim(match)
+
   echo "Phabrik -> " . match
 
   if match[0] == 'D'
