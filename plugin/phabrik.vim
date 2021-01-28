@@ -116,52 +116,52 @@ endfunc
 
 function! s:diff_action(action)
   let diffname = getbufvar("%", 'diffnum')
-  phabrik#phab("diff", "--" . action . " " . diffname)
+  call phabrik#phab("diff", "--" . a:action . " " . diffname)
 
 endfunc
 
 function! phabrik#diff_plan_changes()
-  s:diff_action("plan-changes")
+  call s:diff_action("plan-changes")
 endfunc
 
 function! phabrik#diff_request_review()
-  s:diff_action("request-review")
+  call s:diff_action("request-review")
 endfunc
 
 function! phabrik#diff_close()
-  s:diff_action("close")
+  call s:diff_action("close")
 endfunc
 
 function! phabrik#diff_reopen()
-  s:diff_action("reopen")
+  call s:diff_action("reopen")
 endfunc
 
 function! phabrik#diff_abandon()
-  s:diff_action("abandon")
+  call s:diff_action("abandon")
 endfunc
 
 function! phabrik#diff_approve()
-  s:diff_action("approve")
+  call s:diff_action("approve")
 endfunc
 
 function! phabrik#diff_reclaim()
-  s:diff_action("reclaim")
+  call s:diff_action("reclaim")
 endfunc
 
 function! phabrik#diff_request_changes()
-  s:diff_action("request-changes")
+  call s:diff_action("request-changes")
 endfunc
 
 function! phabrik#diff_commandeer()
-  s:diff_action("commandeer")
+  call s:diff_action("commandeer")
 endfunc
 
 function! phabrik#diff_resign()
-  s:diff_action("resign")
+  call s:diff_action("resign")
 endfunc
 
 function! phabrik#diff_patch()
-  s:diff_action("patch")
+  call s:diff_action("patch")
 endfunc
 
 function! s:task_buf_update(buf, tasknr)
