@@ -161,7 +161,8 @@ function! phabrik#diff_resign()
 endfunc
 
 function! phabrik#diff_patch()
-  call s:diff_action("patch")
+  let diffname = getbufvar("%", 'diffnum')
+  call phabrik#phab("patch", diffname)
 endfunc
 
 function! s:task_buf_update(buf, tasknr)
