@@ -28,7 +28,7 @@ function! phabrik#phablist(command, args)
 endfunction
 
 function! s:buf_switch_to(buf)
-  exe 'sil! ' . a:buf . 'buffer'
+  execute(a:buf . 'buffer')
 endfunc
 
 function! s:push_buf(buf)
@@ -44,12 +44,12 @@ function! s:pop_buf(buf)
 endfunc
 
 function! s:set_md_buffer_options(buf)
-  let cur_buf = s:push_buf(a:buf)
   call setbufvar(a:buf, '&bufhidden', 'hide')
   call setbufvar(a:buf, '&buftype', 'nofile')
-  setlocal buflisted
+  call setbufvar(a:buf, '&buflisted', 1)
   call setbufvar(a:buf, '&filetype', g:phabrik_filetype)
   call setbufvar(a:buf, '&syntax', 'markdown')
+  let cur_buf = s:push_buf(a:buf)
   setlocal nofoldenable
   setlocal conceallevel=0
 
@@ -73,9 +73,8 @@ function! s:buf_set_lines(buf, text, modifiable)
 endfunc
 
 function! s:buf_set_title(buf, title)
-  let cur_buf = s:push_buf(a:buf)
-  file fnameescape(a:title)
-  call s:pop_buf(cur_buf)
+  let command = a:buf . "bufdo file " . fnameescape(a:title)
+  execute(command)
 endfunc
 
 function! s:dashboard_buf_update(buf)
@@ -87,6 +86,7 @@ function! phabrik#dashboard()
   let buf = bufnr("Phabrik", 1)
   call s:set_md_buffer_options(buf)
   call s:dashboard_buf_update(buf)
+  call s:buf_set_title(buf, "Phabrik")
   call s:buf_switch_to(buf)
 endfunc
 
