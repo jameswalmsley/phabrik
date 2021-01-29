@@ -90,13 +90,13 @@ class Backend(object):
                 base_found = True
             else:
                 p = utils.run(f"git fetch -n {r.repo.staging} refs/tags/phabricator/base/{r.diff.id}:refs/tags/phabrik/{r.diff.id}")
-                print(p.stdout)
                 if(p.returncode == 0):
-                    base_sha = f"phabrik/base/{r.diff.id}"
+                    base_sha = f"phabrik/{r.diff.id}"
                     base_found = True
 
             p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {base_sha}")
 
+            cwd = os.getcwd()
             os.chdir(f".git/phabrik/{diff_name}")
 
             utils.run("git reset")
@@ -114,8 +114,9 @@ class Backend(object):
             p = utils.run(f"git format-patch -U{context} --stdout HEAD~1")
             val = p.stdout
 
+            os.chdir(cwd)
             utils.run(f"git worktree remove --force .git/phabrik/{diff_name}")
-            utils.run(f"git tag -d phabrik/{r.diff.id}")
+            p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
             print(val.strip())
             return 0
