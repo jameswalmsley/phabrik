@@ -89,8 +89,11 @@ class Backend(object):
                 base_sha = r.diff.base
                 base_found = True
             else:
-                p = utils.run(f"git fetch -n {r.repo.staging} refs/tags/base/{r.diff.id}:refs/tags/phabrik/{r.diff.id}")
-                pprint(r.repo.staging)
+                p = utils.run(f"git fetch -n {r.repo.staging} refs/tags/phabricator/base/{r.diff.id}:refs/tags/phabrik/{r.diff.id}")
+                print(p.stdout)
+                if(p.returncode == 0):
+                    base_sha = f"phabrik/base/{r.diff.id}"
+                    base_found = True
 
             p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {base_sha}")
 
@@ -99,7 +102,7 @@ class Backend(object):
             utils.run("git reset")
 
             if base_found:
-                ret, _ = utils.run("git am --keep-non-patch -3", input=output)
+                p = utils.run("git am --keep-non-patch -3", input=output)
             else:
                 # This is more complex, we need to apply the patch manually to out HEAD.
                 print("Manually applying patch:")
@@ -109,8 +112,10 @@ class Backend(object):
                 sys.exit(1)
 
             p = utils.run(f"git format-patch -U{context} --stdout HEAD~1")
+            val = p.stdout
 
             utils.run(f"git worktree remove --force .git/phabrik/{diff_name}")
+            utils.run(f"git tag -d phabrik/{r.diff.id}")
 
             print(val.strip())
             return 0
