@@ -133,7 +133,6 @@ class Diff:
             self.__diff = ""
             for patch in reversed(self.unidiff):
                 self.__diff = self.__diff + str(patch) + "\n"
-            self.__diff = self.__diff.strip()
 
         return self.__diff
 
