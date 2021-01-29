@@ -4,6 +4,7 @@ from pprint import pprint
 import frontmatter
 import email
 from frontmatter.default_handlers import YAMLHandler
+import subprocess
 
 phab = Phabricator()
 
@@ -108,6 +109,10 @@ def get_project(phid):
 def get_project_id(id):
     result = phab.project.search(constraints={'ids': [id]})
     return result['data'][0]
+
+def get_repo(phid):
+    result = phab.repository.query(phids=[phid])
+    return result[0]
 
 def transaction(type, value):
         return {'type': type, 'value': value}
@@ -225,3 +230,7 @@ def system(cmd):
     if ret == None:
         ret = 0
     return (ret, out)
+
+def run(cmd, input=None):
+    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, input=input, encoding="utf-8", shell=True)
+    return p

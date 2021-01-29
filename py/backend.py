@@ -7,7 +7,6 @@ import frontmatter
 from pprint import pprint
 from io import BytesIO, SEEK_SET
 import jinja2
-from subprocess import run, PIPE
 
 class Backend(object):
     def __init__(self, spath):
@@ -81,16 +80,37 @@ class Backend(object):
 
         if context != None:
 
-            ret, val = utils.system(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {r.diff.base}")
+            p = utils.run("git rev-parse HEAD")
+            base_sha = p.stdout
+            base_found = False
+
+            p = utils.run(f"git show --stat {r.diff.base}")
+            if(p.returncode == 0):
+                base_sha = r.diff.base
+                base_found = True
+            else:
+                p = utils.run(f"git fetch -n {r.repo.staging} refs/tags/base/{r.diff.id}:refs/tags/phabrik/{r.diff.id}")
+                pprint(r.repo.staging)
+
+            p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {base_sha}")
 
             os.chdir(f".git/phabrik/{diff_name}")
 
-            utils.system("git reset")
+            utils.run("git reset")
 
-            p = run(['git', 'am', '--keep-non-patch', '-3'], stdout=PIPE, input=output, encoding="utf-8")
-            ret,val = utils.system(f"git format-patch -U{context} --stdout HEAD~1")
+            if base_found:
+                ret, _ = utils.run("git am --keep-non-patch -3", input=output)
+            else:
+                # This is more complex, we need to apply the patch manually to out HEAD.
+                print("Manually applying patch:")
+                p = utils.run("git apply -3", input=output)
+                print(p.stderr)
+                print(p.returncode)
+                sys.exit(1)
 
-            utils.system(f"git worktree remove --force .git/phabrik/{diff_name}")
+            p = utils.run(f"git format-patch -U{context} --stdout HEAD~1")
+
+            utils.run(f"git worktree remove --force .git/phabrik/{diff_name}")
 
             print(val.strip())
             return 0

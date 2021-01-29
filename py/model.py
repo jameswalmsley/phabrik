@@ -6,6 +6,25 @@ import unidiff
 
 phid_cache = {}
 
+class Repo:
+    raw = None
+    phid = None
+    staging = None
+
+    def __init__(self, raw):
+        self.raw = raw
+        self.phid = raw['phid']
+        if raw['staging']['supported']:
+            self.staging = raw['staging']['uri']
+        phid_cache[self.phid] = self
+
+    @staticmethod
+    def fromPHID(phid):
+        if phid in phid_cache:
+            return phid_cache[phid]
+        raw = utils.get_repo(phid)
+        return Repo(raw)
+
 class User:
     raw = None
     realName = None
@@ -143,6 +162,7 @@ class Revision:
     id = None
     name = None
     __diff = None
+    __repo = None
     __commitmessage = None
     __author = None
     diffPHID = None
@@ -166,6 +186,12 @@ class Revision:
         if not self.__diff:
             self.__diff = Diff(self.diffPHID)
         return self.__diff
+
+    @property
+    def repo(self):
+        if not self.__repo:
+            self.__repo = Repo.fromPHID(self.repositoryPHID)
+        return self.__repo
 
     @property
     def commitmessage(self):
