@@ -81,7 +81,7 @@ class Backend(object):
 
         if context != None:
 
-            ret, val = utils.system(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name}")
+            ret, val = utils.system(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {r.diff.base}")
 
             os.chdir(f".git/phabrik/{diff_name}")
 
