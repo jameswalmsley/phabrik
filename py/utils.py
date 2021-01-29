@@ -1,4 +1,3 @@
-import re
 import os
 from phabricator import Phabricator
 from pprint import pprint
@@ -218,3 +217,11 @@ def parse_matter(fp):
                 'comment': comment
         }
 
+
+def system(cmd):
+    fd = os.popen(cmd)
+    out = fd.read()
+    ret = fd.close()
+    if ret == None:
+        ret = 0
+    return (ret, out)

@@ -66,6 +66,7 @@ def create(args):
     backend.create(args.title)
 
 @subcommand([argument('diff'),
+             argument('--context', dest="context"),
              argument('--plan-changes', action="store_true"),
              argument('--request-review', action="store_true"),
              argument('--close', action="store_true"),
@@ -99,7 +100,7 @@ def diff(args):
     if(args.resign):
         return backend.diff_resign(args.diff)
 
-    return backend.rawdiff(args.diff)
+    return backend.rawdiff(args.diff, args.context)
 
 @subcommand([argument('diff')])
 def patch(args):

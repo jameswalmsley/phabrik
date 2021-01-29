@@ -90,6 +90,17 @@ function! phabrik#dashboard()
   call s:buf_switch_to(buf)
 endfunc
 
+function! phabrik#diff_context(context)
+  let diffname = getbufvar("%", 'diffnum')
+  let diff = phabrik#phablist("diff", "--context=" . a:context . " " . diffname)
+
+  let buf = bufnr("%")
+  call setbufvar(buf, '&modifiable', 1)
+
+  call s:buf_set_lines(buf, diff, 0)
+
+endfunc
+
 function! phabrik#diff_get(diffnum)
   let buf = bufnr(a:diffnum, 1)
 

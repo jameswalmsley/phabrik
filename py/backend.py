@@ -1,4 +1,5 @@
 import sys
+import os
 from frontmatter.default_handlers import YAMLHandler
 import utils
 import model
@@ -6,6 +7,7 @@ import frontmatter
 from pprint import pprint
 from io import BytesIO, SEEK_SET
 import jinja2
+from subprocess import run, PIPE
 
 class Backend(object):
     def __init__(self, spath):
@@ -70,12 +72,29 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def rawdiff(self, diff_name):
+    def rawdiff(self, diff_name, context):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
         template = self.templateEnv.get_template("rawdiff.diff")
 
         output = template.render(r=r, utils=utils)
+
+        if context != None:
+
+            ret, val = utils.system(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name}")
+
+            os.chdir(f".git/phabrik/{diff_name}")
+
+            utils.system("git reset")
+
+            p = run(['git', 'am', '--keep-non-patch', '-3'], stdout=PIPE, input=output, encoding="utf-8")
+            ret,val = utils.system(f"git format-patch -U{context} --stdout HEAD~1")
+
+            utils.system(f"git worktree remove --force .git/phabrik/{diff_name}")
+
+            print(val.strip())
+            return 0
+
         print(output)
         return 0
 
