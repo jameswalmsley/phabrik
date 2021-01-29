@@ -5,11 +5,18 @@ import frontmatter
 import email
 from frontmatter.default_handlers import YAMLHandler
 import subprocess
+import pathlib
 
 phab = Phabricator()
+spath = None
 
-def __init__():
+def __init__(path):
+    global spath
     phab.update_interfaces()
+    spath = path
+
+def phab_host():
+    return str(pathlib.Path(phab.host).parent)
 
 def phid_lookup(name):
     result = phab.phid.lookup(names=[name])
@@ -81,8 +88,20 @@ def get_commitmessage(revision_id):
 def diff_action(phid, action):
     transactions = []
     transactions.append({'type': action, 'value': True})
-    result = phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
-    pprint(result)
+    phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
+
+def diff_inline_comments(phid, id, inlines):
+    for i in inlines:
+        phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=True, lineNumber=i['line'], content=i['comment'])
+
+    p = run(f"bash {spath}/diffget.sh {phab_host()} {id}")
+    tags = p.stdout.split('<')
+    for t in tags:
+        if 'csrf' in t:
+            for x in t.split(' '):
+                if 'value' in x:
+                    token  = x.split('"')[1].split('"')[0]
+                    os.system(f"bash {spath}/submit.sh {phab_host()} {id} {token}")
 
 def task_get_revision_phids(phid):
     phids = []

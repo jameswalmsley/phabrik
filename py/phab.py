@@ -8,7 +8,7 @@ import backend
 
 spath = pathlib.Path(__file__).parent.absolute()
 
-utils.__init__()
+utils.__init__(spath)
 backend = backend.Backend(str(spath))
 
 parser = argparse.ArgumentParser()
@@ -66,6 +66,7 @@ def create(args):
     backend.create(args.title)
 
 @subcommand([argument('diff'),
+             argument('--comment', action="store_true"),
              argument('--context', dest="context"),
              argument('--plan-changes', action="store_true"),
              argument('--request-review', action="store_true"),
@@ -99,6 +100,9 @@ def diff(args):
         return backend.diff_commandeer(args.diff)
     if(args.resign):
         return backend.diff_resign(args.diff)
+
+    if(args.comment):
+        return backend.diff_comment(args.diff, args.context)
 
     return backend.rawdiff(args.diff, args.context)
 

@@ -4,9 +4,11 @@ from frontmatter.default_handlers import YAMLHandler
 import utils
 import model
 import frontmatter
+import tempfile
 from pprint import pprint
 from io import BytesIO, SEEK_SET
 import jinja2
+import unidiff
 
 class Backend(object):
     def __init__(self, spath):
@@ -71,9 +73,7 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def rawdiff(self, diff_name, context):
-        phid = utils.phid_lookup(diff_name)
-        r = model.Revision.fromPHID(phid)
+    def genrawdiff(self, r, context):
         template = self.templateEnv.get_template("rawdiff.diff")
 
         output = template.render(r=r, utils=utils)
@@ -118,11 +118,78 @@ class Backend(object):
             utils.run(f"git worktree remove --force .git/phabrik/{diff_name}")
             p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
-            print(val.strip())
-            return 0
+            return val.strip()
 
-        print(output)
-        return 0
+        return output
+
+    def rawdiff(self, diff_name, context):
+        phid = utils.phid_lookup(diff_name)
+        r = model.Revision.fromPHID(phid)
+        print(self.genrawdiff(r, context))
+
+
+    def diff_comment(self, diff_name, context):
+        phid = utils.phid_lookup(diff_name)
+        r = model.Revision.fromPHID(phid)
+        rawdiff = self.genrawdiff(r, context)
+
+        annotated_diff = sys.stdin.read()
+
+        fd, path_orig = tempfile.mkstemp()
+        with open(path_orig, 'w') as f:
+            f.write(rawdiff)
+        os.close(fd)
+
+        p = utils.run(f"diff -w -U3 {path_orig} -", input=annotated_diff)
+
+        os.unlink(path_orig)
+
+        f = unidiff.PatchSet.from_string(p.stdout)[0]
+        uni = unidiff.PatchSet.from_string(rawdiff)
+
+        #
+        # Extract the additions from the diffs! Each hunk is an in-line comment.
+        #
+        comments = []
+        for comment in f:
+            text = ""
+            # Capture the firstline number of the hunk.
+            # The targetline before the start of the new hunk is where the comment
+            # was placed.
+            firstline = None
+            for line in comment:
+                # Only additions can be comments.
+                if line.is_added:
+                    # Get all the lines of the hunk as a block-comment.
+                    text = text + line.value
+                    if firstline is None:
+                        firstline = line
+            # Mini object to describe this comment,
+            c = {'dline': firstline.target_line_no-1, 'line': firstline.source_line_no, 'v': text}
+            comments.append(c)
+
+        #
+        # Iterate through the main diff, and match comments to original source files.
+        #
+        inlines = []
+        for p in uni:
+            for h in p:
+                for l in h:
+                    for c in comments:
+                        if l.diff_line_no == c['dline']:
+                            hunk_first = None
+                            for line in h:
+                                if line.is_added:
+                                    hunk_first = line
+                                    break # This is deep! lets break!
+                            inline = {'path': p.path, 'line': hunk_first.target_line_no, 'comment': c['v']}
+                            inlines.append(inline)
+
+        #
+        # Finally we have a set of inlines, lets submit them.
+        #
+        utils.diff_inline_comments(phid, r.id, inlines)
+
 
     def create(self, title):
         tid = utils.task_create(title)
