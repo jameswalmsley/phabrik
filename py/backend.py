@@ -140,12 +140,23 @@ class Backend(object):
             f.write(rawdiff)
         os.close(fd)
 
-        p = utils.run(f"diff -w -U3 {path_orig} -", input=annotated_diff)
+        p = utils.run(f"diff -w -U0 {path_orig} -", input=annotated_diff)
 
         os.unlink(path_orig)
 
         f = unidiff.PatchSet.from_string(p.stdout)[0]
         uni = unidiff.PatchSet.from_string(rawdiff)
+        total_diff_lines = 0
+
+        #
+        # Find out what unidiff has parsed the last diff line to be.
+        # This allows us to attach any comments on the end to the last line.
+        #
+        for p in uni:
+            for h in p:
+                for l in h:
+                    if l.diff_line_no:
+                        total_diff_lines = l.diff_line_no
 
         #
         # Extract the additions from the diffs! Each hunk is an in-line comment.
@@ -172,17 +183,18 @@ class Backend(object):
         # Iterate through the main diff, and match comments to original source files.
         #
         inlines = []
+        difflines = 0
         for p in uni:
             for h in p:
                 for l in h:
+                    if not l.diff_line_no:
+                        break
+                    if(l.diff_line_no and l.diff_line_no > difflines):
+                        difflines = l.diff_line_no
+
                     for c in comments:
-                        if l.diff_line_no == c['dline']:
-                            hunk_first = None
-                            for line in h:
-                                if line.is_added:
-                                    hunk_first = line
-                                    break # This is deep! lets break!
-                            inline = {'path': p.path, 'line': hunk_first.target_line_no, 'comment': c['v']}
+                        if difflines == c['dline'] or (difflines == total_diff_lines and c['dline'] > total_diff_lines):
+                            inline = {'path': p.path, 'line': l.target_line_no, 'comment': c['v']}
                             inlines.append(inline)
 
         #
