@@ -94,10 +94,10 @@ class Backend(object):
                     base_sha = f"phabrik/{r.diff.id}"
                     base_found = True
 
-            p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{diff_name} {base_sha}")
+            p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{r.diff.id} {base_sha}")
 
             cwd = os.getcwd()
-            os.chdir(f".git/phabrik/{diff_name}")
+            os.chdir(f".git/phabrik/{r.diff.id}")
 
             utils.run("git reset")
 
@@ -115,7 +115,7 @@ class Backend(object):
             val = p.stdout
 
             os.chdir(cwd)
-            utils.run(f"git worktree remove --force .git/phabrik/{diff_name}")
+            utils.run(f"git worktree remove --force .git/phabrik/{r.diff.id}")
             p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
             return val.strip()
