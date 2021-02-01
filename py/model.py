@@ -179,10 +179,12 @@ class Diff:
     def diff(self):
         if not self.__diff:
             self.__diff = ""
-            for patch in reversed(self.unidiff):
-                self.__diff = self.__diff + str(patch) + "\n"
+            for i, patch in enumerate(reversed(self.unidiff)):
+                if i:
+                    self.__diff = self.__diff + '\n'
+                self.__diff = self.__diff + str(patch)
 
-        return self.__diff.strip()
+        return self.__diff
 
 
 class Revision:
