@@ -24,11 +24,12 @@ Comments:
 ================================================================================
 
 {% for c in task.comments|reverse -%}
+{% if not c.removed -%}
 {{utils.justify_strings(c.author.name + " ({})".format(c.author.username), "`{}`".format(c.created), 81)}}
 --------------------------------------------------------------------------------
 
 {{c.text}}
-
+{% endif -%}
 {% endfor %}
 
 ::: Add Comment
