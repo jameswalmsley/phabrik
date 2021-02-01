@@ -8,3 +8,19 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 {{r.diff.diff}}
 --
 2.30.0
+{% if show_comments -%}
++++
+{% for c in r.comments|reverse -%}
+{{utils.justify_strings(c.author.name + " ({})".format(c.author.username), "`{}`".format(c.created), 81)}}
+--------------------------------------------------------------------------------
+
+{{c.text}}
+
+{% endfor -%}
+
+::: Add Comment
+--------------------------------------------------------------------------------
+
+
++++
+{% endif -%}

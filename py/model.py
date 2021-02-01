@@ -71,22 +71,51 @@ class Comment:
     removed = False
     created = None
     modified = None
+    transacion = None
 
-    def __init__(self, raw):
+    def __init__(self, t):
+        raw = t.raw['comments'][0]
         self.raw = raw
         self.author = User.fromPHID(raw['authorPHID'])
         self.text = raw['content']['raw']
         self.removed = raw['removed']
         self.created = datetime.fromtimestamp(raw['dateCreated'])
         self.modified = datetime.fromtimestamp(raw['dateModified'])
+        self.transaction = t
 
     @staticmethod
     def fromTransactions(ts):
         comments = []
         for t in ts:
             if t.type == 'comment':
-                comments.append(Comment(t.raw['comments'][0]))
+                comments.append(Comment(t))
         return comments
+
+class InlineComment:
+    phid = None
+    author = None
+    raw = None
+    text = None
+    done = None
+    id = None
+    transaction = None
+    def __init__(self, t):
+        self.transaction = t
+        raw = t.raw
+        self.raw = raw
+        c = raw['comments'][0]
+        self.text = c['content']['raw']
+        self.id = c['id']
+        self.phid = c['phid']
+
+    @staticmethod
+    def fromTransactions(ts):
+        inlines = []
+        for t in ts:
+            if t.type == 'inline':
+                inlines.append(InlineComment(t))
+        return inlines
+
 
 class Transaction:
     phid = None
@@ -167,6 +196,8 @@ class Revision:
     __author = None
     diffPHID = None
     __transactions = None
+    __comments = None
+    __inlines = None
     comment = None
     created = None
 
@@ -224,6 +255,24 @@ class Revision:
         for r in raw:
             revs.append(Revision(r))
         return revs
+
+    @property
+    def transactions(self):
+        if not self.__transactions:
+            self.__transactions = Transaction.forPHID(self.phid)
+        return self.__transactions
+
+    @property
+    def comments(self):
+        if not self.__comments:
+            self.__comments = Comment.fromTransactions(self.transactions)
+        return self.__comments
+
+    @property
+    def inlines(self):
+        if not self.__inlines:
+            self.__inlines = InlineComment.fromTransactions(self.transactions)
+        return self.__inlines
 
     def __str__(self):
         return pformat(self.__dict__)

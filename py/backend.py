@@ -73,10 +73,9 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def genrawdiff(self, r, context):
+    def genrawdiff(self, r, context, show_comments):
         template = self.templateEnv.get_template("rawdiff.diff")
 
-        output = template.render(r=r, utils=utils)
 
         if context != None:
 
@@ -101,8 +100,9 @@ class Backend(object):
 
             utils.run("git reset")
 
+            realpatch = template.render(r=r, utils=utils, show_comments=false)
             if base_found:
-                p = utils.run("git am --keep-non-patch -3", input=output)
+                p = utils.run("git am --keep-non-patch -3", input=realpatch)
             else:
                 # This is more complex, we need to apply the patch manually to out HEAD.
                 print("Manually applying patch:")
@@ -120,15 +120,16 @@ class Backend(object):
 
             return val.strip()
 
+        output = template.render(r=r, utils=utils, show_comments=show_comments)
+
         return output
 
-    def rawdiff(self, diff_name, context):
+    def rawdiff(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
-        print(self.genrawdiff(r, context))
+        print(self.genrawdiff(r, context, show_comments))
 
-
-    def diff_comment(self, diff_name, context):
+    def diff_comment(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
         rawdiff = self.genrawdiff(r, context)

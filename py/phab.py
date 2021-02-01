@@ -67,6 +67,7 @@ def create(args):
 
 @subcommand([argument('diff'),
              argument('--comment', action="store_true"),
+             argument('--show-comments', action='store_true'),
              argument('--context', dest="context"),
              argument('--plan-changes', action="store_true"),
              argument('--request-review', action="store_true"),
@@ -102,9 +103,9 @@ def diff(args):
         return backend.diff_resign(args.diff)
 
     if(args.comment):
-        return backend.diff_comment(args.diff, args.context)
+        return backend.diff_comment(args.diff, args.context, args.show_comments)
 
-    return backend.rawdiff(args.diff, args.context)
+    return backend.rawdiff(args.diff, args.context, args.show_comments)
 
 @subcommand([argument('diff')])
 def patch(args):
