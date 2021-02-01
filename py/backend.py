@@ -132,7 +132,7 @@ class Backend(object):
     def diff_comment(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
-        rawdiff = self.genrawdiff(r, context)
+        rawdiff = self.genrawdiff(r, context, False)
 
         annotated_diff = sys.stdin.read()
 
