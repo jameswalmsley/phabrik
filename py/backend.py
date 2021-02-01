@@ -185,6 +185,7 @@ class Backend(object):
         #
         inlines = []
         difflines = 0
+        commentlines = 0
         for p in uni:
             for h in p:
                 for l in h:
@@ -195,7 +196,8 @@ class Backend(object):
 
                     for c in comments:
                         if difflines == c['dline'] or (difflines == total_diff_lines and c['dline'] > total_diff_lines):
-                            inline = {'path': p.path, 'line': l.target_line_no, 'comment': c['v']}
+                            inline = {'path': p.path, 'line': l.target_line_no-commentlines, 'comment': c['v']}
+                            commentlines = commentlines + len(c['v'].splitlines())
                             inlines.append(inline)
 
         #
