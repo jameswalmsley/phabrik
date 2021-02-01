@@ -145,7 +145,11 @@ class Backend(object):
 
         os.unlink(path_orig)
 
-        f = unidiff.PatchSet.from_string(p.stdout)[0]
+        f = unidiff.PatchSet.from_string(p.stdout)
+        if len(f) == 0:
+            print("No comments detected.")
+            return -1
+        f = f[0]
         uni = unidiff.PatchSet.from_string(rawdiff)
         total_diff_lines = 0
 
