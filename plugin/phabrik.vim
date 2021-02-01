@@ -95,9 +95,10 @@ function! phabrik#diff_context(context)
   let diff = phabrik#phablist("diff", "--context=" . a:context . " " . diffname)
 
   let buf = bufnr("%")
-  call setbufvar(buf, '&modifiable', 1)
 
-  call s:buf_set_lines(buf, diff, 0)
+  call s:buf_set_lines(buf, diff, 1)
+
+  call setbufvar(buf, 'context', a:context)
 
 endfunc
 
@@ -113,16 +114,32 @@ function! phabrik#diff_get(diffnum)
 
   call setbufvar(buf, '&modifiable', 1)
 
-  call s:buf_set_lines(buf, diff, 0)
+  call s:buf_set_lines(buf, diff, 1)
 
   call execute(buf . "buffer")
 
   call setbufvar(buf, '&filetype', 'diff')
+  call setbufvar(buf, 'context', 0)
 
   let command = buf . "bufdo file " . fnameescape(a:diffnum)
   call execute(command)
 
   call execute("nnoremap <buffer> <Enter> :call phabrik#navigate()<CR>")
+endfunc
+
+function! phabrik#diff_comment()
+  let buf = bufnr("%")
+  let diffname = getbufvar(buf, 'diffnum')
+  let context = getbufvar(buf, 'context')
+  let command = "--comment"
+  if context != 0
+    let command = command . " --context=" . context
+  endif
+
+  execute(":w !" . phabrik#command() . "diff " . command . " " . diffname)
+  execute(":w ! cat > mod.diff")
+
+
 endfunc
 
 function! s:diff_action(action)
