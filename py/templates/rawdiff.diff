@@ -23,4 +23,4 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 
 
 +++
-{% endif -%}
+{%- endif -%}

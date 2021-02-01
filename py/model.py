@@ -182,7 +182,7 @@ class Diff:
             for patch in reversed(self.unidiff):
                 self.__diff = self.__diff + str(patch) + "\n"
 
-        return self.__diff
+        return self.__diff.strip()
 
 
 class Revision:

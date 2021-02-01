@@ -79,7 +79,7 @@ def get_diff(phid):
 
 def get_rawdiff(id):
     result = phab.differential.getrawdiff(diffID=str(id))
-    return result[:]
+    return result[:].strip()
 
 def get_commitmessage(revision_id):
     result = phab.differential.getcommitmessage(revision_id=revision_id)
