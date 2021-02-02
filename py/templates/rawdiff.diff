@@ -5,22 +5,25 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 {{"\n".join(r.commitmessage.splitlines()[1:])}}
 ---
 
-{{r.diff.diff}}
+{{rawdiff}}
+{% if not git %}
 --
 2.30.0
-{%- if show_comments -%}
+{% endif %}
+{% if show_comments %}
+
 +++
-{% for c in r.comments|reverse -%}
+{% for c in r.comments|reverse %}
 {{utils.justify_strings(c.author.name + " ({})".format(c.author.username), "`{}`".format(c.created), 81)}}
 --------------------------------------------------------------------------------
 
 {{c.text}}
 
-{% endfor -%}
+{% endfor %}
 
 ::: Add Comment
 --------------------------------------------------------------------------------
 
 
 +++
-{%- endif -%}
+{% endif %}

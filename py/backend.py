@@ -13,7 +13,7 @@ import unidiff
 class Backend(object):
     def __init__(self, spath):
         self.templateLoader = jinja2.FileSystemLoader(searchpath=spath+"/templates")
-        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
+        self.templateEnv = jinja2.Environment(loader=self.templateLoader, trim_blocks=True, lstrip_blocks=True)
 
     def task_update(self, task):
         description=""
