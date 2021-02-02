@@ -92,7 +92,7 @@ endfunc
 
 function! phabrik#diff_context(context)
   let diffname = getbufvar("%", 'diffnum')
-  let diff = phabrik#phablist("diff", "--context=" . a:context . " " . diffname)
+  let diff = phabrik#phablist("diff", "--show-comments --context=" . a:context . " " . diffname)
 
   let buf = bufnr("%")
 
@@ -110,7 +110,7 @@ function! phabrik#diff_get(diffnum)
   call setbufvar(buf, '&buflisted', 1)
   call setbufvar(buf, 'diffnum', a:diffnum)
 
-  let diff = phabrik#phablist("diff", a:diffnum)
+  let diff = phabrik#phablist("diff", "--show-comments " . a:diffnum)
 
   call setbufvar(buf, '&modifiable', 1)
 

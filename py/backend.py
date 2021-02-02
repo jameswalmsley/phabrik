@@ -77,7 +77,7 @@ class Backend(object):
         template = self.templateEnv.get_template("rawdiff.diff")
 
 
-        if context != None:
+        if context:
 
             p = utils.run("git rev-parse HEAD")
             base_sha = p.stdout
@@ -118,11 +118,11 @@ class Backend(object):
             utils.run(f"git worktree remove --force .git/phabrik/{r.diff.id}")
             p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
-            return val.strip()
+            output = template.render(r=r, rawdiff=val.strip(), utils=utils, show_comments=show_comments, git=True)
+        else:
+            output = template.render(r=r, rawdiff=r.diff.diff, utils=utils, show_comments=show_comments, git=False)
 
-        output = template.render(r=r, utils=utils, show_comments=show_comments)
-
-        return output
+        return output.strip()
 
     def rawdiff(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
