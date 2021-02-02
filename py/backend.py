@@ -134,7 +134,8 @@ class Backend(object):
         r = model.Revision.fromPHID(phid)
         rawdiff = self.genrawdiff(r, context, False)
 
-        annotated_diff = sys.stdin.read()
+        matter = utils.parse_matter(sys.stdin)
+        annotated_diff = matter['content'].strip()
 
         fd, path_orig = tempfile.mkstemp()
         with open(path_orig, 'w') as f:
@@ -147,67 +148,78 @@ class Backend(object):
 
         f = unidiff.PatchSet.from_string(p.stdout)
         if len(f) == 0:
-            print("No comments detected.")
-            return -1
-        f = f[0]
-        uni = unidiff.PatchSet.from_string(rawdiff)
-        total_diff_lines = 0
+            print("No inline-comments detected.")
+        else:
+            f = f[0]
+            uni = unidiff.PatchSet.from_string(rawdiff)
+            total_diff_lines = 0
 
-        #
-        # Find out what unidiff has parsed the last diff line to be.
-        # This allows us to attach any comments on the end to the last line.
-        #
-        for p in uni:
-            for h in p:
-                for l in h:
-                    if l.diff_line_no:
-                        total_diff_lines = l.diff_line_no
+            #
+            # Find out what unidiff has parsed the last diff line to be.
+            # This allows us to attach any comments on the end to the last line.
+            #
+            for p in uni:
+                for h in p:
+                    for l in h:
+                        if l.diff_line_no:
+                            total_diff_lines = l.diff_line_no
 
-        #
-        # Extract the additions from the diffs! Each hunk is an in-line comment.
-        #
-        comments = []
-        for comment in f:
-            text = ""
-            # Capture the firstline number of the hunk.
-            # The targetline before the start of the new hunk is where the comment
-            # was placed.
-            firstline = None
-            for line in comment:
-                # Only additions can be comments.
-                if line.is_added:
-                    # Get all the lines of the hunk as a block-comment.
-                    text = text + line.value
-                    if firstline is None:
-                        firstline = line
-            # Mini object to describe this comment,
-            c = {'dline': firstline.target_line_no-1, 'line': firstline.source_line_no, 'v': text}
-            comments.append(c)
+            #
+            # Extract the additions from the diffs! Each hunk is an in-line comment.
+            #
+            comments = []
+            commentlines = 0
+            bfirst = True
+            for comment in f:
+                text = ""
+                # Capture the firstline number of the hunk.
+                # The targetline before the start of the new hunk is where the comment
+                # was placed.
+                firstline = None
+                for line in comment:
+                    # Only additions can be comments.
+                    if line.is_added:
+                        # Get all the lines of the hunk as a block-comment.
+                        text = text + line.value
+                        if firstline is None:
+                            firstline = line
 
-        #
-        # Iterate through the main diff, and match comments to original source files.
-        #
-        inlines = []
-        difflines = 0
-        commentlines = 0
-        for p in uni:
-            for h in p:
-                for l in h:
-                    if not l.diff_line_no:
-                        break
-                    if(l.diff_line_no and l.diff_line_no > difflines):
-                        difflines = l.diff_line_no
+                # Mini object to describe this comment,
+                c = {'dline': firstline.target_line_no-1, 'line': firstline.target_line_no-1-commentlines, 'v': text}
+                commentlines = commentlines + len(text.splitlines())
+                comments.append(c)
+                #print(f"{c['dline']} : {c['line']} - {c['v'].strip()}")
 
-                    for c in comments:
-                        if difflines == c['dline'] or (difflines == total_diff_lines and c['dline'] > total_diff_lines):
-                            inline = {'path': p.path, 'line': l.target_line_no-commentlines, 'comment': c['v']}
-                            commentlines = commentlines + len(c['v'].splitlines())
-                            inlines.append(inline)
+            #
+            # Iterate through the main diff, and match comments to original source files.
+            #
+            inlines = []
+            difflines = 0
+            commentlines = 0
+            for p in uni:
+                for h in p:
+                    for l in h:
+                        if not l.diff_line_no:
+                            break
 
-        #
-        # Finally we have a set of inlines, lets submit them.
-        #
-        utils.diff_inline_comments(phid, r.id, inlines)
+                        if(l.diff_line_no and l.diff_line_no > difflines):
+                            difflines = l.diff_line_no
+
+                        for c in comments:
+                            if difflines == c['line'] or (difflines == total_diff_lines and c['line'] > total_diff_lines):
+                                inline = {'path': p.path, 'line': l.target_line_no, 'comment': c['v']}
+                                commentlines = commentlines + len(c['v'].splitlines())
+                                inlines.append(inline)
+
+            #
+            # Finally we have a set of inlines, lets submit them.
+            #
+            #pprint(inlines)
+            utils.diff_inline_comments(phid, r.id, inlines)
+
+        # Do we have normal comments?
+        if len(matter['comment']):
+            utils.diff_add_comment(phid, matter['comment'])
 
 
     def create(self, title):

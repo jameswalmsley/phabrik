@@ -16,42 +16,42 @@
 Assigned Tasks
 --------------------------------------------------------------------------------
 
-{% for t in assigned -%}
+{% for t in assigned %}
 T{{t.id}} - {{t.title}}
 {% endfor %}
 
 DIFFs to Review
 --------------------------------------------------------------------------------
 
-{% for r in responsible['needs-review'] -%}
-{% include 'item-revision.md' -%}
+{% for r in responsible['needs-review'] %}
+{% include 'item-revision.md' %}
 {% endfor %}
 
 Ready To Land
 --------------------------------------------------------------------------------
 
-{% for r in responsible['accepted'] -%}
-{% include 'item-revision.md' -%}
+{% for r in responsible['accepted'] %}
+{% include 'item-revision.md' %}
 {% endfor %}
 
 Ready to Update
 --------------------------------------------------------------------------------
 
-{% for r in responsible['changes-planned'] -%}
-{% include 'item-revision.md' -%}
+{% for r in responsible['changes-planned'] %}
+{% include 'item-revision.md' %}
 {% endfor %}
 
 Changes Planned
 --------------------------------------------------------------------------------
 
-{% for r in responsible['needs-revision'] -%}
-{% include 'item-revision.md' -%}
+{% for r in responsible['needs-revision'] %}
+{% include 'item-revision.md' %}
 {% endfor %}
 
 
 Projects
 --------------------------------------------------------------------------------
 
-{% for p in projects -%}
+{% for p in projects %}
 P{{p.id}} - {{p.name}}
 {% endfor %}

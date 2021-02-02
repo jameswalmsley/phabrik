@@ -98,6 +98,12 @@ def diff_action(phid, action):
     transactions.append({'type': action, 'value': True})
     phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
 
+def diff_add_comment(phid, comment):
+    transactions = []
+    transactions.append({'type': 'comment', 'value': comment})
+    phab.differential.revision.edit(objectIdentifier=phid, transactions=transactions)
+
+
 def diff_inline_comments(phid, id, inlines):
     for i in inlines:
         phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=True, lineNumber=i['line'], content=i['comment'])
@@ -236,11 +242,13 @@ def parse_matter(fp):
 
     # Split new comment from backmatter
     comment = None
-    if '::: Add Comment' in backmatter:
+    if backmatter and '::: Add Comment' in backmatter:
         comment = backmatter.split('::: Add Comment')
         comment = comment[-1].strip().splitlines()[1:]
         comment = "\n".join(comment).strip()
 
+    if not comment:
+        comment = []
 
     return {
                 'frontmatter': post.metadata,
