@@ -100,7 +100,7 @@ class Backend(object):
 
             utils.run("git reset")
 
-            realpatch = template.render(r=r, utils=utils, show_comments=false)
+            realpatch = template.render(r=r, utils=utils, show_comments=False)
             if base_found:
                 p = utils.run("git am --keep-non-patch -3", input=realpatch)
             else:
