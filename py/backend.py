@@ -106,7 +106,7 @@ class Backend(object):
             else:
                 # This is more complex, we need to apply the patch manually to out HEAD.
                 print("Manually applying patch:")
-                p = utils.run("git apply -3", input=output)
+                p = utils.run("git apply -3", input=realpatch)
                 print(p.stderr)
                 print(p.returncode)
                 sys.exit(1)
