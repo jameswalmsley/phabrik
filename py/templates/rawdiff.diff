@@ -1,3 +1,4 @@
+{% if show_header %}
 From {{r.diff.base}} Mon Sep 17 00:00:00 2001
 From: {{r.author.name}} <{{r.author.username}}@{{utils.domain()}}>
 Date: {{utils.rfc2822(r.created)}}
@@ -5,6 +6,7 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 {{"\n".join(r.commitmessage.splitlines()[1:])}}
 ---
 
+{% endif %}
 {{rawdiff}}
 {% if not git %}
 --

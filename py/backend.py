@@ -74,7 +74,7 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def genrawdiff(self, r, context):
+    def genrawdiff(self, r, context, show_header=True):
         template = self.templateEnv.get_template("rawdiff.diff")
 
 
@@ -119,9 +119,9 @@ class Backend(object):
             utils.run(f"git worktree remove --force .git/phabrik/{r.diff.id}")
             p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
-            output = template.render(r=r, rawdiff=val.strip(), utils=utils, show_comments=False, git=True)
+            output = template.render(r=r, rawdiff=val.strip(), utils=utils, show_comments=False, show_header=show_header, git=True)
         else:
-            output = template.render(r=r, rawdiff=r.diff.diff, utils=utils, show_comments=False, git=False)
+            output = template.render(r=r, rawdiff=r.diff.diff, utils=utils, show_comments=False, show_header=show_header, git=False)
 
         return output.strip()
 
@@ -202,9 +202,14 @@ class Backend(object):
                                 for line in lines:
                                     commentdiff += f"# {line}\n"
             else:
-                commentdiff += str(f)
+                for h in f:
+                    for line in h:
+                        if line.diff_line_no:
+                            commentdiff += str(line.value)
 
-        print(commentdiff)
+        template = self.templateEnv.get_template("rawdiff.diff")
+        output = template.render(r=r, rawdiff=commentdiff.strip(), utils=utils, show_comments=False, show_header=True, git=False)
+        print(output)
 
 
     def diff_comment(self, diff_name, context, show_comments):
@@ -212,16 +217,16 @@ class Backend(object):
         r = model.Revision.fromPHID(phid)
         rawdiff = self.genrawdiff(r, context)
 
-        matter = utils.parse_matter(sys.stdin)
-        annotated_diff = matter['content'].strip()
 
         remove_comments = ""
-        for line in annotated_diff.splitlines():
+        for line in sys.stdin.read().splitlines():
             if line.startswith('#'):
                 continue
             remove_comments += line + "\n"
 
         annotated_diff = remove_comments
+        matter = utils.parse_matter(annotated_diff)
+        annotated_diff = matter['content'].strip()
 
         fd, path_orig = tempfile.mkstemp()
         with open(path_orig, 'w') as f:

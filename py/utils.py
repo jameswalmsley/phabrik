@@ -227,8 +227,8 @@ def justify_strings(left, right, length):
 def rfc2822(datetime):
     return email.utils.format_datetime(datetime)
 
-def parse_matter(fp):
-    post = frontmatter.load(fp)
+def parse_matter(string):
+    post = frontmatter.loads(string)
     content = None
     backmatter = None
 
