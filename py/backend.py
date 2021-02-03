@@ -135,7 +135,7 @@ class Backend(object):
 
             utils.run("git reset")
 
-            realpatch = template.render(r=r, utils=utils, show_comments=False)
+            realpatch = template.render(r=r, rawdiff=self.diff_parsed(r, r.diff.diff), utils=utils, show_comments=False, show_header=False, git=False)
             if base_found:
                 p = utils.run("git am --keep-non-patch -3", input=realpatch)
             else:
@@ -162,9 +162,9 @@ class Backend(object):
     def rawdiff(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
-        rawdiff = self.genrawdiff(r, context)
 
         if not show_comments:
+            rawdiff = self.genrawdiff(r, context)
             print(self.diff_parsed(r, rawdiff))
             return 0
 
