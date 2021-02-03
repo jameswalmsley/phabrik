@@ -9,6 +9,7 @@ from pprint import pprint
 from io import BytesIO, SEEK_SET
 import jinja2
 import unidiff
+import textwrap
 
 class Backend(object):
     def __init__(self, spath):
@@ -73,7 +74,7 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def genrawdiff(self, r, context, show_comments):
+    def genrawdiff(self, r, context):
         template = self.templateEnv.get_template("rawdiff.diff")
 
 
@@ -118,24 +119,109 @@ class Backend(object):
             utils.run(f"git worktree remove --force .git/phabrik/{r.diff.id}")
             p = utils.run(f"git tag -d phabrik/{r.diff.id}")
 
-            output = template.render(r=r, rawdiff=val.strip(), utils=utils, show_comments=show_comments, git=True)
+            output = template.render(r=r, rawdiff=val.strip(), utils=utils, show_comments=False, git=True)
         else:
-            output = template.render(r=r, rawdiff=r.diff.diff, utils=utils, show_comments=show_comments, git=False)
+            output = template.render(r=r, rawdiff=r.diff.diff, utils=utils, show_comments=False, git=False)
 
         return output.strip()
 
     def rawdiff(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
-        print(self.genrawdiff(r, context, show_comments))
+        rawdiff = self.genrawdiff(r, context)
+
+        if not show_comments:
+            print(rawdiff)
+            return 0
+
+        commentdiff = ""
+
+        # Get revision inline comments, match them up with sources
+        inlines = {}
+        for i in r.inlines:
+            if not i.path in inlines:
+                inlines[i.path] = []
+            inlines[i.path].append(i)
+
+        uni = unidiff.PatchSet.from_string(rawdiff)
+
+        for f in uni:
+            if f.path in inlines:
+                file_comments = {}
+                source = ''
+                target = ''
+                # patch info is
+                info = '' if f.patch_info is None else str(f.patch_info)
+                if not f.is_binary_file and f:
+                    source = "--- %s%s\n" % (
+                        f.source_file,
+                        '\t' + f.source_timestamp if f.source_timestamp else '')
+                    target = "+++ %s%s\n" % (
+                        f.target_file,
+                        '\t' + f.target_timestamp if f.target_timestamp else '')
+                commentdiff += info + source + target
+
+                # We have an inline comment for this file!
+                # Make a little dict so we can index them by line number easily!
+                for i in inlines[f.path]:
+                    if i.line not in file_comments:
+                        file_comments[i.line] = []
+                    file_comments[i.line].append(i)
+                    #
+                    # TODO
+                    # Sort by line number and then by creationdata of comment.
+                    #
+
+                for h in f:
+                    head = "@@ -%d,%d +%d,%d @@%s\n" % (
+                        h.source_start, h.source_length,
+                        h.target_start, h.target_length,
+                        ' ' + h.section_header if h.section_header else '')
+
+                    commentdiff += head
+
+                    for l in h:
+                        if l.is_added: commentdiff += '+'
+                        if l.is_context: commentdiff += ' '
+                        if l.is_removed: commentdiff += '-'
+                        commentdiff = commentdiff + l.value
+                        if l.target_line_no in file_comments:
+                            for c in file_comments[l.target_line_no]:
+                                commentdiff += f"#\n"
+                                commentdiff += f"# {c.author.realName} ({c.author.username})::\n"
+                                commentdiff += f"#---------------------------------------------------------\n"
+                                lines = c.text.splitlines()
+                                reflow = False
+                                for line in lines:
+                                    if len(line) > 120:
+                                        reflow = True
+
+                                if reflow:
+                                    lines = textwrap.wrap(c.text, 80)
+
+                                for line in lines:
+                                    commentdiff += f"# {line}\n"
+            else:
+                commentdiff += str(f)
+
+        print(commentdiff)
+
 
     def diff_comment(self, diff_name, context, show_comments):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
-        rawdiff = self.genrawdiff(r, context, False)
+        rawdiff = self.genrawdiff(r, context)
 
         matter = utils.parse_matter(sys.stdin)
         annotated_diff = matter['content'].strip()
+
+        remove_comments = ""
+        for line in annotated_diff.splitlines():
+            if line.startswith('#'):
+                continue
+            remove_comments += line + "\n"
+
+        annotated_diff = remove_comments
 
         fd, path_orig = tempfile.mkstemp()
         with open(path_orig, 'w') as f:

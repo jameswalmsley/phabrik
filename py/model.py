@@ -99,14 +99,20 @@ class InlineComment:
     done = None
     id = None
     transaction = None
+    path = None
+    line = None
     def __init__(self, t):
         self.transaction = t
         raw = t.raw
         self.raw = raw
         c = raw['comments'][0]
+        self.author = User.fromPHID(raw['authorPHID'])
         self.text = c['content']['raw']
         self.id = c['id']
         self.phid = c['phid']
+        self.path = raw['fields']['path']
+        self.done = raw['fields']['isDone']
+        self.line = raw['fields']['line']
 
     @staticmethod
     def fromTransactions(ts):
