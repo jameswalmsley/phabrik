@@ -74,6 +74,40 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
+    def diff_parsed(self, r, rawdiff):
+        diff = ""
+        uni = unidiff.PatchSet.from_string(rawdiff)
+        for f in uni:
+            source = ''
+            target = ''
+            # patch info is
+            info = '' if f.patch_info is None else str(f.patch_info)
+            if not f.is_binary_file and f:
+                source = "--- %s%s\n" % (
+                    f.source_file,
+                    '\t' + f.source_timestamp if f.source_timestamp else '')
+                target = "+++ %s%s\n" % (
+                    f.target_file,
+                    '\t' + f.target_timestamp if f.target_timestamp else '')
+            diff += info + source + target
+
+            for h in f:
+                head = "@@ -%d,%d +%d,%d @@%s\n" % (
+                    h.source_start, h.source_length,
+                    h.target_start, h.target_length,
+                    ' ' + h.section_header if h.section_header else '')
+
+                diff += head
+
+                for line in h:
+                    if line.diff_line_no:
+                        diff += str(line)
+
+        template = self.templateEnv.get_template("rawdiff.diff")
+        output = template.render(r=r, rawdiff=diff.strip(), utils=utils, show_comments=False, show_header=False, git=False)
+
+        return output
+
     def genrawdiff(self, r, context, show_header=True):
         template = self.templateEnv.get_template("rawdiff.diff")
 
@@ -131,8 +165,10 @@ class Backend(object):
         rawdiff = self.genrawdiff(r, context)
 
         if not show_comments:
-            print(rawdiff)
+            print(self.diff_parsed(r, rawdiff))
             return 0
+
+        rawdiff = self.genrawdiff(r, context, False)
 
         commentdiff = ""
 
@@ -202,14 +238,35 @@ class Backend(object):
                                 for line in lines:
                                     commentdiff += f"# {line}\n"
             else:
+                source = ''
+                target = ''
+                # patch info is
+                info = '' if f.patch_info is None else str(f.patch_info)
+                if not f.is_binary_file and f:
+                    source = "--- %s%s\n" % (
+                        f.source_file,
+                        '\t' + f.source_timestamp if f.source_timestamp else '')
+                    target = "+++ %s%s\n" % (
+                        f.target_file,
+                        '\t' + f.target_timestamp if f.target_timestamp else '')
+                commentdiff += info + source + target
+
                 for h in f:
+                    head = "@@ -%d,%d +%d,%d @@%s\n" % (
+                        h.source_start, h.source_length,
+                        h.target_start, h.target_length,
+                        ' ' + h.section_header if h.section_header else '')
+
+                    commentdiff += head
+
                     for line in h:
                         if line.diff_line_no:
-                            commentdiff += str(line.value)
+                            commentdiff += str(line)
 
         template = self.templateEnv.get_template("rawdiff.diff")
-        output = template.render(r=r, rawdiff=commentdiff.strip(), utils=utils, show_comments=False, show_header=True, git=False)
+        output = template.render(r=r, rawdiff=commentdiff.strip(), utils=utils, show_comments=True, show_header=True, git=False)
         print(output)
+
 
 
     def diff_comment(self, diff_name, context, show_comments):
@@ -230,10 +287,10 @@ class Backend(object):
 
         fd, path_orig = tempfile.mkstemp()
         with open(path_orig, 'w') as f:
-            f.write(rawdiff)
+            f.write(self.diff_parsed(r, rawdiff))
         os.close(fd)
 
-        p = utils.run(f"diff -w -U0 {path_orig} -", input=annotated_diff)
+        p = utils.run(f"diff -w -U0 {path_orig} -", input=self.diff_parsed(r, annotated_diff))
 
         os.unlink(path_orig)
 
