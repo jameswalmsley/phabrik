@@ -19,7 +19,7 @@ class Backend(object):
     def task_update(self, task):
         description=""
 
-        matter = utils.parse_matter(sys.stdin)
+        matter = utils.parse_matter(sys.stdin.read())
         post = matter['frontmatter']
         description = matter['content'].strip()
 
