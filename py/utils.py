@@ -106,7 +106,7 @@ def diff_add_comment(phid, comment):
 
 def diff_inline_comments(phid, id, inlines):
     for i in inlines:
-        phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=True, lineNumber=i['line'], content=i['comment'])
+        phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=i['newfile'], lineNumber=i['line'], content=i['comment'])
 
     p = run(f"bash {spath}/diffget.sh {phab_host()} {id}")
     tags = p.stdout.split('<')

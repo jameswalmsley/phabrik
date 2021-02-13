@@ -185,10 +185,8 @@ class Diff:
     def diff(self):
         if not self.__diff:
             self.__diff = ""
-            for i, patch in enumerate(reversed(self.unidiff)):
-                if i:
-                    self.__diff = self.__diff + '\n'
-                self.__diff = self.__diff + str(patch)
+            for patch in reversed(self.unidiff):
+                self.__diff += str(patch)
 
         return self.__diff
 

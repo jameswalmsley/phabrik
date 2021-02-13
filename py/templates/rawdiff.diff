@@ -8,7 +8,7 @@ Subject: {{r.commitmessage.splitlines()[0]}}
 
 {% endif %}
 {{rawdiff}}
-{% if not git %}
+{%- if not git %}
 --
 2.30.0
 {% endif %}
