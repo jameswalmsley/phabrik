@@ -108,13 +108,11 @@ def diff(args):
     if(args.comment):
         return backend.diff_comment(args.diff, args.context, args.show_comments)
 
-    return backend.rawdiff(args.diff, args.context, args.show_comments)
+    return backend.rawdiff(args.diff, args.context, args.show_comments, args.ignore_whitespace)
 
 @subcommand([argument('diff')])
 def patch(args):
-    # Use git apply --check to test if patch can be cleanly applied.
-    phabdiff = "python3 {} diff {}".format(str(spath) + "/phab.py", args.diff)
-    os.system("{} | git am --keep-non-patch -3".format(phabdiff))
+    return backend.patch(args.diff)
 
 @subcommand()
 def projects(args):

@@ -164,6 +164,17 @@ class Backend(object):
         if len(matter['comment']):
             utils.diff_add_comment(phid, matter['comment'])
 
+    def patch(self, diff_name):
+        phid = utils.phid_lookup(diff_name)
+        r = model.Revision.fromPHID(phid)
+        rawdiff = diff.ParsedDiff(r.diff.diff)
+
+        patch = self.genpatch(r, rawdiff.parsed(), False, False, True)
+
+        p = utils.run("git am --keep-non-patch -3", input=patch)
+        print(p.stdout)
+
+
 
     def create(self, title):
         tid = utils.task_create(title)
