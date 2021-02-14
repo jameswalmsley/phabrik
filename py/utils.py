@@ -106,7 +106,13 @@ def diff_add_comment(phid, comment):
 
 def diff_inline_comments(phid, id, inlines):
     for i in inlines:
-        phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=i['newfile'], lineNumber=i['line'], content=i['comment'])
+        #
+        # Force comment onto new-file (target)
+        # Currently phabricator has a bug where isNewFile == 0 for False.. but
+        # the request parser in python-phabricator cannot handle this.
+        #
+        newfile=True
+        phab.differential.createinline(revisionID=id, filePath=i['path'], isNewFile=newfile, lineNumber=i['line'], content=i['comment'])
 
     p = run(f"bash {spath}/diffget.sh {phab_host()} {id}")
     tags = p.stdout.split('<')

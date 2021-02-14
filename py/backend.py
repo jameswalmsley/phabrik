@@ -75,7 +75,7 @@ class Backend(object):
         output = template.render(frontmatter=fm, description=post.content.strip(), task=t, utils=utils)
         print(output)
 
-    def context(self, r, parsed, context):
+    def context(self, r, parsed, context, ignore_whitespace):
         p = utils.run("git rev-parse HEAD")
         base_sha = p.stdout
         base_found = False
@@ -104,7 +104,8 @@ class Backend(object):
             # This is more complex, we need to apply the patch manually to our HEAD.
             p = utils.run("git apply -3", input=realpatch)
 
-        p = utils.run(f"git format-patch -U{context} --stdout HEAD~1", input=realpatch)
+        whitespace = "-w" if ignore_whitespace else ""
+        p = utils.run(f"git format-patch -U{context} --stdout {whitespace} HEAD~1", input=realpatch)
         val = p.stdout
 
         os.chdir(cwd)
@@ -118,12 +119,16 @@ class Backend(object):
         output = template.render(r=r, rawdiff=rawdiff, utils=utils, show_comments=comments, show_header=header, git=git)
         return output
 
-    def rawdiff(self, diff_name, context, show_comments):
+    def rawdiff(self, diff_name, context, show_comments, ignore_whitespace):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
         rawdiff = diff.ParsedDiff(str(r.diff.diff))
+
+        if not context and ignore_whitespace:
+            context = 5
+
         if context:
-            rawdiff = self.context(r, rawdiff, context)
+            rawdiff = self.context(r, rawdiff, context, ignore_whitespace)
 
         if not show_comments:
             patch = self.genpatch(r, rawdiff.parsed(), False, False, True)

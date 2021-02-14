@@ -68,6 +68,7 @@ def create(args):
     backend.create(args.title)
 
 @subcommand([argument('diff'),
+             argument('-w', action="store_true", dest="ignore_whitespace"),
              argument('--comment', action="store_true"),
              argument('--show-comments', action='store_true'),
              argument('--context', dest="context"),
