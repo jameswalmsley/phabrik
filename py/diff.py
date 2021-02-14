@@ -27,46 +27,6 @@ class ParsedDiff(object):
     def parsed(self):
         return str(self.unidiff)
 
-    def context(self, context):
-        p = utils.run("git rev-parse HEAD")
-        base_sha = p.stdout
-        base_found = False
-
-        p = utils.run(f"git show --stat {r.diff.base}")
-        if(p.returncode == 0):
-            base_sha = r.diff.base
-            base_found = True
-        else:
-            p = utils.run(f"git fetch -n {r.repo.staging} refs/tags/phabricator/base/{r.diff.id}:refs/tags/phabrik/{r.diff.id}")
-            if(p.returncode == 0):
-                base_sha = f"phabrik/{r.diff.id}"
-                base_found = True
-
-        p = utils.run(f"git worktree add --detach --no-checkout .git/phabrik/{r.diff.id} {base_sha}")
-
-        cwd = os.getcwd()
-        os.chdir(f".git/phabrik/{r.diff.id}")
-
-        utils.run("git reset")
-
-        realpatch = template.render(r=r, rawdiff=self.diff_parsed(r, r.diff.diff), utils=utils, show_comments=False, show_header=True, git=False)
-        if base_found:
-            p = utils.run("git am --keep-non-patch -3", input=realpatch)
-            print("Pathching with base!")
-            print(p.stdout)
-        else:
-            # This is more complex, we need to apply the patch manually to out HEAD.
-            p = utils.run("git apply -3", input=realpatch)
-
-        p = utils.run(f"git format-patch -U{context} --stdout HEAD~1", input=realpatch)
-        val = p.stdout
-
-        os.chdir(cwd)
-        utils.run(f"git worktree remove --force .git/phabrik/{r.diff.id}")
-        p = utils.run(f"git tag -d phabrik/{r.diff.id}")
-
-        return ParsedDiff(val)
-
     def comments(self, annotated):
         fd, temp_path = tempfile.mkstemp()
         with open(temp_path, 'w') as f:
@@ -239,6 +199,5 @@ class ParsedDiff(object):
                     for line in h:
                         if line.diff_line_no:
                             commentdiff += str(line)
-                commentdiff += "\n"
 
         return commentdiff
