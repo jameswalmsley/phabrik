@@ -57,7 +57,7 @@ def task(args):
     if(args.update):
         return backend.task_update(args.task)
 
-    backend.task(args.task)
+    return backend.task(args.task)
 
 @subcommand([])
 def dashboard(args):

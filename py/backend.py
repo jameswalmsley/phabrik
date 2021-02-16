@@ -26,6 +26,11 @@ class Backend(object):
 
         t = model.Task(None)
         t.phid = utils.phid_lookup(task)
+
+        if not t.phid:
+            print("Error looking up Task number...")
+            return -1
+
         t.description = description
 
         if('title' in post):
