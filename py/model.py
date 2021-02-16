@@ -186,10 +186,9 @@ class Diff:
         if not self.__diff:
             self.__diff = ""
             for patch in reversed(self.unidiff):
-                self.__diff += str(patch)
+                self.__diff += str(patch) + "\n"
 
         return self.__diff
-
 
 class Revision:
     phid = None

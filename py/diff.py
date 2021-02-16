@@ -24,8 +24,69 @@ class ParsedDiff(object):
         self.rawdiff = stripped
         self.unidiff = unidiff.PatchSet.from_string(self.rawdiff)
 
-    def parsed(self):
-        return str(self.unidiff)
+    def parsed(self, annotate=False, revision=None):
+        r=revision
+        # Get revision inline comments, match them up with sources
+        inlines = {}
+        if annotate and revision:
+            for i in r.inlines:
+                if not i.path in inlines:
+                    inlines[i.path] = []
+                inlines[i.path].append(i)
+
+        uni = self.unidiff
+
+        commentdiff = ""
+
+        for f in uni:
+            has_inlines = f.path in inlines
+            file_comments = {}
+            source = ''
+            target = ''
+            # patch info is
+            info = '' if f.patch_info is None else str(f.patch_info)
+            if not f.is_binary_file and f:
+                source = "--- %s%s\n" % (
+                    f.source_file,
+                    '\t' + f.source_timestamp if f.source_timestamp else '')
+                target = "+++ %s%s\n" % (
+                    f.target_file,
+                    '\t' + f.target_timestamp if f.target_timestamp else '')
+            commentdiff += info + source + target
+
+            if has_inlines:
+                # We have an inline comment for this file!
+                # Make a little dict so we can index them by line number easily!
+                for i in inlines[f.path]:
+                    if i.line not in file_comments:
+                        file_comments[i.line] = []
+                    file_comments[i.line].insert(0, i)
+
+            for h in f:
+                head = "@@ -%d,%d +%d,%d @@%s\n" % (
+                    h.source_start, h.source_length,
+                    h.target_start, h.target_length,
+                    ' ' + h.section_header if h.section_header else '')
+
+                commentdiff += head
+
+                for l in h:
+                    if l.is_added: commentdiff += '+'
+                    if l.is_context: commentdiff += ' '
+                    if l.is_removed: commentdiff += '-'
+                    commentdiff = commentdiff + l.value
+                    if has_inlines and l.target_line_no in file_comments:
+                        for c in file_comments[l.target_line_no]:
+                            commentdiff += f"#\n"
+                            commentdiff += f"# {c.author.realName} ({c.author.username})::\n"
+                            commentdiff += f"#---------------------------------------------------------\n"
+                            lines = c.text.splitlines()
+                            lines = textwrap.wrap(c.text, 80) #mdformat.text(c.text, options="wrap").splitlines()
+
+                            for line in lines:
+                                commentdiff += f"# {line}\n"
+
+        return commentdiff
 
     def comments(self, annotated):
         fd, temp_path = tempfile.mkstemp()
@@ -75,7 +136,6 @@ class ParsedDiff(object):
 
         return comments
 
-
     def inlines(self, comments):
         #
         # iterate through the main diff, and match comments with their source files.
@@ -106,98 +166,4 @@ class ParsedDiff(object):
         return inlines
 
     def annotate(self, r):
-        # Get revision inline comments, match them up with sources
-        inlines = {}
-        for i in r.inlines:
-            if not i.path in inlines:
-                inlines[i.path] = []
-            inlines[i.path].append(i)
-
-        uni = self.unidiff
-
-        commentdiff = ""
-
-        for f in uni:
-            if f.path in inlines:
-                file_comments = {}
-                source = ''
-                target = ''
-                # patch info is
-                info = '' if f.patch_info is None else str(f.patch_info)
-                if not f.is_binary_file and f:
-                    source = "--- %s%s\n" % (
-                        f.source_file,
-                        '\t' + f.source_timestamp if f.source_timestamp else '')
-                    target = "+++ %s%s\n" % (
-                        f.target_file,
-                        '\t' + f.target_timestamp if f.target_timestamp else '')
-                commentdiff += info + source + target
-
-                # We have an inline comment for this file!
-                # Make a little dict so we can index them by line number easily!
-                for i in inlines[f.path]:
-                    if i.line not in file_comments:
-                        file_comments[i.line] = []
-                    file_comments[i.line].insert(0, i)
-                    #
-                    # TODO
-                    # Sort by line number and then by creationdata of comment.
-                    #
-
-                for h in f:
-                    head = "@@ -%d,%d +%d,%d @@%s\n" % (
-                        h.source_start, h.source_length,
-                        h.target_start, h.target_length,
-                        ' ' + h.section_header if h.section_header else '')
-
-                    commentdiff += head
-
-                    for l in h:
-                        if l.is_added: commentdiff += '+'
-                        if l.is_context: commentdiff += ' '
-                        if l.is_removed: commentdiff += '-'
-                        commentdiff = commentdiff + l.value
-                        if l.target_line_no in file_comments:
-                            for c in file_comments[l.target_line_no]:
-                                commentdiff += f"#\n"
-                                commentdiff += f"# {c.author.realName} ({c.author.username})::\n"
-                                commentdiff += f"#---------------------------------------------------------\n"
-                                lines = c.text.splitlines()
-                                reflow = False
-                                for line in lines:
-                                    if len(line) > 120:
-                                        reflow = True
-
-                                if reflow:
-                                    lines = textwrap.wrap(c.text, 80)
-
-                                for line in lines:
-                                    commentdiff += f"# {line}\n"
-                commentdiff += "\n"
-            else:
-                source = ''
-                target = ''
-                # patch info is
-                info = '' if f.patch_info is None else str(f.patch_info)
-                if not f.is_binary_file and f:
-                    source = "--- %s%s\n" % (
-                        f.source_file,
-                        '\t' + f.source_timestamp if f.source_timestamp else '')
-                    target = "+++ %s%s\n" % (
-                        f.target_file,
-                        '\t' + f.target_timestamp if f.target_timestamp else '')
-                commentdiff += info + source + target
-
-                for h in f:
-                    head = "@@ -%d,%d +%d,%d @@%s\n" % (
-                        h.source_start, h.source_length,
-                        h.target_start, h.target_length,
-                        ' ' + h.section_header if h.section_header else '')
-
-                    commentdiff += head
-
-                    for line in h:
-                        if line.diff_line_no:
-                            commentdiff += str(line)
-
-        return commentdiff
+        return self.parsed(annotate=True, revision=r)
