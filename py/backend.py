@@ -169,6 +169,27 @@ class Backend(object):
         if len(matter['comment']):
             utils.diff_add_comment(phid, matter['comment'])
 
+    def apply_patch(self, patch):
+        utils.run("git am --abort")
+        p = utils.run("git am --keep-non-patch -3", input=patch)
+        if p.returncode == 0:
+            # Sucessfully applied
+            return 0
+
+        # Standard apply failed.
+        p = utils.run("git am --abort")
+
+        #
+        # Attempt to apply with less and less context.
+        #
+        for i in range(3, 0, -1):
+            p = utils.run(f"git am -C{i} --keep-non-patch -3", input=patch)
+            if p.returncode == 0:
+                return 0
+            utils.run("git am --abort")
+
+        return -1
+
     def patch(self, diff_name):
         phid = utils.phid_lookup(diff_name)
         r = model.Revision.fromPHID(phid)
@@ -176,10 +197,7 @@ class Backend(object):
 
         patch = self.genpatch(r, rawdiff.parsed(), False, False, True)
 
-        p = utils.run("git am --keep-non-patch -3", input=patch)
-        print(p.stdout)
-
-
+        return self.apply_patch(patch)
 
     def create(self, title):
         tid = utils.task_create(title)
