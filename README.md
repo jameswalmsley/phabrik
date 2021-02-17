@@ -20,16 +20,16 @@ allow developers to create and edit tasks without having to use the web-interfac
 It further allows a streamlined workflow, and supports simple interactions with repositories
 and revisions.
 
+DIFF reviews can be completed entirely by annotating a diff in VIM, and thread comments
+can be easily added to tasks and diffs.
+
 ## Plugins
 
-Currently phabrik support NeoVim, but we are moving to full ViM compatibility.
-The main tooling is written in python, and can be used to create a plugin for any
-text editor.
-
+Phabrik is a a standard VIM plugin, and python tool. The plugin is fully compatible with Neovim.
 
 ## Current Features
 
-Allows users to sync their phabricator tasks with vimwiki, and modify and update them conveniently.
+Allows users and modify and update tasks from VIM.
 
   * Task titles, points, and assigned user can be updated using frontmatter.
   * Task discussion threads.
@@ -37,11 +37,13 @@ Allows users to sync their phabricator tasks with vimwiki, and modify and update
   * Differentials are listed in the "backmatter" and can be previewed.
   * DIFF status is displayed.
   * DIFFs can be accepted.
+  * DIFFs can be reviewed.
+  * Comments can be added to a DIFF comment thread.
 
 ## Install
 
 ```
-Plug 'jameswalmsley/phabrik', {'do': ':lua phab.install()'}
+Plug 'jameswalmsley/phabrik', {'do': ':call phabrik#install()'}
 ```
 
 ## Features
@@ -60,6 +62,7 @@ Plug 'jameswalmsley/phabrik', {'do': ':lua phab.install()'}
     * View Diffs
     * Patch Diffs
     * Accept Diffs
+    * Review Diffs
 
 
 ```

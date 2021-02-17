@@ -15,6 +15,12 @@ function! phabrik#python()
   return "PYTHONPATH=" . phabrik#get_path() . "/py/packages python3 "
 endfunction
 
+function! phabrik#install()
+  let packages = "python-frontmatter phabricator"
+  let cmd = "python3 -m pip install --upgrade --target=" .. phabrik#get_path() .. "/py/packages " .. packages
+  return system(cmd)
+endfunction
+
 function! phabrik#command()
   return "" . phabrik#python() . phabrik#get_path() . "/py/phab.py "
 endfunction
